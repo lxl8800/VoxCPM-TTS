@@ -1,0 +1,8 @@
+{
+  "name": "voxcpm-worker-relay",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@gradio/client": "^1.19.1"
+  }
+}

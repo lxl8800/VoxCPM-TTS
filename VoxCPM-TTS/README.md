@@ -19,7 +19,197 @@
    [https://lxl8800.com/tool/html/VoxCPM-TTS.html](https://lxl8800.com/tool/html/VoxCPM-TTS.html)
 2. 下载仓库中的 `VoxCPM-TTS.html`，在本地浏览器里直接打开使用
 
-这是一个单文件页面，不依赖本地后端服务，所以在线可用，本地打开也可用。
+这是一个单文件页面，不依赖本地打包流程，所以可以直接下载打开。
+
+同时，仓库也提供了一个可直接部署到 Cloudflare Workers 的打包目录，用于解决国内无法稳定访问 HuggingFace 的问题。
+
+页面的中转策略现在是：
+
+1. 如果当前站点同源存在 `/api/status`，页面会优先使用同源中转
+2. 如果 URL 上带有 `?relay=https://你的中转域名`，页面会优先使用这个中转
+3. 如果两者都没有，再尝试直连 HuggingFace
+
+如果你不想自己维护 VPS，可以直接使用 Cloudflare Worker 版本中转。仓库里已附带一个可独立部署的目录：
+
+`voxcpm-worker-relay/`
+
+目录结构：
+
+1. `package.json`
+2. `wrangler.jsonc`
+3. `src/worker.js`
+4. `public/index.html`
+
+这个目录会把前端页面和中转接口一起部署到同一个 Cloudflare Worker 域名下。
+
+它直接通过 `@gradio/client` 连接 `openbmb/VoxCPM-Demo`，并提供：
+
+1. `/` 或 `/index.html`：前端页面
+2. `/api/status`
+3. `/api/generate`
+
+### 本地单文件使用
+
+直接打开根目录下的 `VoxCPM-TTS.html` 即可。
+
+如果你本地打开页面，但又想强制走已部署好的 Cloudflare 中转，可以在地址后面加：
+
+```text
+?relay=https://你的域名
+```
+
+例如：
+
+```text
+file:///D:/Code/AI/TTS/VoxCPM-TTS/VoxCPM-TTS.html?relay=https://your-worker.workers.dev
+```
+
+### Cloudflare 打包部署
+
+部署目录是：
+
+`voxcpm-worker-relay/`
+
+把这个目录单独推到 GitHub 后，在 Cloudflare Workers 中导入该仓库或该目录进行部署。
+
+`wrangler.jsonc` 已包含静态资源目录配置，因此部署后：
+
+1. 页面会从同源 `/` 提供
+2. 中转接口会从同源 `/api/status` 和 `/api/generate` 提供
+3. 前端会自动优先命中同源中转，不需要额外改 HTML
+
+### Fork 后直接部署到 Cloudflare 的教程
+
+如果你希望别人几乎不碰代码就能自己部署，最省事的方式就是：
+
+1. 先 `Fork` 当前项目到自己的 GitHub
+2. 再让 Cloudflare 直接导入这个仓库
+3. 部署时把工作目录指向 `VoxCPM-TTS/voxcpm-worker-relay`
+
+具体步骤如下。
+
+#### 第 1 步：Fork 仓库
+
+1. 打开当前项目的 GitHub 页面
+2. 点击右上角 `Fork`
+3. 选择你自己的 GitHub 账号
+4. 等待 GitHub 生成你自己的仓库副本
+
+完成后，你会得到一个你自己名下的仓库，例如：
+
+```text
+https://github.com/你的用户名/VoxCPM-TTS
+```
+
+#### 第 2 步：进入 Cloudflare 创建 Worker
+
+1. 登录 Cloudflare Dashboard
+2. 进入 `Workers & Pages`
+3. 点击 `Create`
+4. 选择 `Import a repository`
+5. 授权 Cloudflare 访问你的 GitHub 仓库
+6. 选择刚刚 fork 的这个项目
+
+#### 第 3 步：填写部署配置
+
+如果 Cloudflare 让你填写构建配置，可以这样填：
+
+1. `Root directory`：
+
+```text
+VoxCPM-TTS/voxcpm-worker-relay
+```
+
+2. `Build command`：
+
+```text
+npm install
+```
+
+3. `Deploy command`：
+
+留空即可。
+
+4. `Output directory`：
+
+留空即可，因为 Worker 会直接读取 `wrangler.jsonc` 里的 `assets.directory = "./public"`。
+
+5. `Framework preset`：
+
+不选也可以，保持默认。
+
+#### 第 4 步：开始部署
+
+点击部署后，Cloudflare 会自动：
+
+1. 安装 `@gradio/client`
+2. 读取 `wrangler.jsonc`
+3. 部署 `src/worker.js`
+4. 同时把 `public/index.html` 作为前端页面一起发布
+
+部署完成后，你会得到一个类似下面的地址：
+
+```text
+https://你的项目名.你的子域.workers.dev
+```
+
+#### 第 5 步：验证部署是否成功
+
+先打开：
+
+```text
+https://你的域名/api/status
+```
+
+正常情况下应返回类似：
+
+```json
+{
+  "ok": true,
+  "relay": "cloudflare-worker",
+  "space": "openbmb/VoxCPM-Demo"
+}
+```
+
+然后再打开首页：
+
+```text
+https://你的域名/
+```
+
+这时页面会自动优先使用同源中转，不需要再额外改代码。
+
+#### 第 6 步：如果你还想继续保留单文件本地版
+
+根目录下的 `VoxCPM-TTS.html` 依然可以直接下载后本地打开。
+
+如果你在本地打开它，但想让它走你刚部署好的国内中转，可以这样用：
+
+```text
+file:///你的本地路径/VoxCPM-TTS.html?relay=https://你的域名
+```
+
+这样就能同时满足：
+
+1. 单文件可离线保存
+2. 本地打开时可走 Cloudflare 中转
+3. 在线部署时自动使用同源中转
+
+#### 常见说明
+
+1. 这个 Cloudflare 版本的意义，就是解决国内无法稳定直连 HuggingFace Space 的问题
+2. 页面本体和中转接口在同一个 Worker 域名下，部署后最省心
+3. 如果后续你更新了根目录的 `VoxCPM-TTS.html`，记得同步更新 `voxcpm-worker-relay/public/index.html`
+
+如果你把页面部署到别的静态站点，而把中转单独部署在另一个域名，也仍然可以在页面前插入：
+
+```html
+<script>
+window.VOXCPM_RELAY_BASE = "https://你的域名";
+</script>
+```
+
+或者直接在 URL 上使用 `?relay=https://你的域名`。
 
 * * *
 

@@ -47,6 +47,8 @@ body{background:var(--bg);color:var(--t1);font-family:var(--f);min-height:100vh;
 .sbar{display:flex;align-items:center;gap:10px;padding:9px 15px;margin-bottom:18px;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r2);font-family:var(--fm);font-size:.7rem;color:var(--t2);opacity:0;animation:su .6s ease .2s forwards}
 .sd{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .sd.on{background:var(--gn);box-shadow:0 0 8px rgba(34,197,94,.5)}
+.sd.off{background:var(--rd);box-shadow:0 0 8px rgba(239,68,68,.4)}
+.sd.ck{background:var(--am);box-shadow:0 0 8px rgba(245,158,11,.4)}
 @keyframes su{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 .tabs{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px;padding:10px 12px;background:rgba(255,255,255,.72);border:1px solid rgba(203,213,225,.9);border-radius:18px;backdrop-filter:blur(12px);box-shadow:0 10px 40px rgba(15,23,42,.06)}
 .tab-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 15px;border:none;border-radius:999px;background:transparent;color:var(--t2);font-family:var(--fd);font-size:.86rem;font-weight:600;cursor:pointer;transition:all .22s}
@@ -121,6 +123,7 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
 .ui .uv{color:var(--cy)}
 .la{margin-top:14px;display:none}
 .la.vis{display:block;animation:su .4s ease}
+.la .lb{margin-top:8px}
 .lb{max-height:200px;overflow-y:auto;padding:11px 13px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r2);font-family:var(--fm);font-size:.68rem;line-height:1.9;color:var(--t3)}
 .lb .l{margin-bottom:1px;word-break:break-all}
 .lb .rq{color:var(--cy)}.lb .rs{color:var(--gn)}.lb .er{color:var(--rd)}.lb .nf{color:var(--am)}
@@ -327,8 +330,74 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
 .waveform-bar{position:absolute;bottom:0;width:3px;background:var(--cy);border-radius:2px 2px 0 0;transition:height .05s}
 
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:3px}
-@media(max-width:960px){.guide-grid,.guide-steps,.batch-grid{grid-template-columns:1fr}.tab-link{margin-left:0}}
-@media(max-width:600px){.app{padding:18px 14px 60px}.hdr h1{font-size:1.8rem}.pnl-b{padding:15px}.grid{gap:14px}.tabs{padding:10px}.tab-btn{flex:1;justify-content:center}.action-row{flex-direction:column;align-items:stretch}.apply-btn{width:100%}}
+@media(max-width:960px){
+  .guide-grid,.guide-steps,.batch-grid{grid-template-columns:1fr}
+  .tab-link{margin-left:0}
+  .batch-list{max-height:none}
+}
+@media(max-width:760px){
+  .app{padding:20px 16px 68px}
+  .hdr{margin-bottom:24px}
+  .hdr-t{gap:10px}
+  .hdr h1{font-size:1.95rem}
+  .hdr .sub{font-size:.8rem}
+  .sbar{padding:10px 12px;align-items:flex-start}
+  .tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:10px}
+  .tab-btn{width:100%;justify-content:center;padding:11px 12px;font-size:.8rem}
+  .tab-link{grid-column:1 / -1;justify-content:center;width:100%;margin-left:0}
+  .pnl-h{padding:12px 16px}
+  .pnl-b{padding:16px}
+  .chips,.ex-row,.snd{gap:8px}
+  .chip,.ex-chip,.sb{font-size:.74rem}
+  .rh,.voice-toolbar,.history-toolbar,.batch-toolbar,.recorder-header{flex-direction:column;align-items:stretch}
+  .history-actions,.batch-actions{width:100%}
+  .history-actions > *,.batch-actions > *{flex:1}
+  .ui{flex-wrap:wrap;gap:8px}
+  .voice-status{line-height:1.7}
+  .voice-list{max-height:none}
+  .voice-chip{width:100%;justify-content:space-between}
+  .guide-hero{padding:18px 18px 16px}
+  .guide-card,.step-card,.batch-box{padding:16px}
+  .batch-item{padding:12px}
+  .batch-item-left{align-items:flex-start}
+  .batch-item-top,.batch-header,.batch-role-row{flex-direction:column;align-items:stretch}
+  .batch-voice-select{min-width:0;max-width:none;flex:1 1 auto;width:100%}
+  .batch-seq{margin-top:2px}
+  .preview-box{font-size:.7rem;line-height:1.75;overflow-x:auto}
+  .ta{min-height:132px}
+}
+@media(max-width:600px){
+  .app{padding:16px 12px 60px}
+  .hdr h1{font-size:1.72rem}
+  .badge{font-size:.62rem;padding:3px 10px}
+  .sbar{font-size:.66rem}
+  .tabs{grid-template-columns:1fr}
+  .tab-btn{font-size:.78rem}
+  .grid{gap:14px}
+  .action-row{flex-direction:column;align-items:stretch}
+  .apply-btn{width:100%;height:42px}
+  .ta,.ci,.sel,.batch-textarea{font-size:16px}
+  .cn{position:static;display:block;margin-top:6px;text-align:right}
+  .style-bar{padding:10px;min-height:52px}
+  .style-bar .tag{font-size:.64rem;padding:5px 8px}
+  .details{padding:10px}
+  .dialect-table{display:block;overflow-x:auto;white-space:nowrap}
+  .upload-area{padding:12px 10px;min-height:58px}
+  .upload-text{font-size:.74rem}
+  .upload-hint{font-size:.64rem}
+  .recorder-controls{justify-content:space-between}
+  .rec-actions{flex-direction:column}
+  .pl{padding:12px;gap:10px}
+  .pb{width:40px;height:40px}
+  .hi{padding:10px 11px;gap:9px}
+  .ht{white-space:normal;overflow:visible;text-overflow:unset}
+  .tt{width:min(92vw,420px);bottom:18px;padding:10px 14px}
+  .modal{padding:12px}
+  .modal-card{width:100%;border-radius:18px}
+  .modal-head,.modal-body,.modal-actions{padding-left:16px;padding-right:16px}
+  .modal-actions{flex-direction:column}
+  .modal-btn{width:100%}
+}
 </style>
 </head>
 <body>
@@ -539,9 +608,9 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
           </div>
         </div>
       </div>
+      <div id="logDesktopMount"></div>
 
-      <!-- 日志与历史 -->
-      <div class="la" id="logArea"><div class="sl" style="margin-top:6px">📋 请求日志</div><div class="lb" id="logBox"></div></div>
+      <!-- 历史 -->
       <div class="hs" id="historyArea">
         <div class="history-toolbar">
           <div class="sl" style="margin:0">🕐 历史记录</div>
@@ -564,7 +633,7 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
           <!-- 注册新人物 -->
           <div style="margin-bottom:14px;padding:12px;background:var(--sf2);border-radius:var(--r2)">
             <div style="display:flex;gap:8px;margin-bottom:10px">
-              <input type="text" class="ci" id="voiceName" placeholder="📛 人物名称（例：暴躁司机老王）" style="flex:1;margin-bottom:0">
+              <input type="text" class="ci" id="voiceName" placeholder="📛 人物名称（例：多愁善感林黛玉）" style="flex:1;margin-bottom:0">
             </div>
             
             <!-- 文件上传 -->
@@ -658,8 +727,15 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
             </label>
           </div>
           <div class="sep"></div>
-          <div class="sl">📡 生成说明（本次请求）</div>
-          <div class="preview-box" id="requestPreview"></div>
+          <div id="requestDesktopMount">
+            <div class="sl">📡 生成说明（本次请求）</div>
+            <div class="preview-box" id="requestPreview"></div>
+          </div>
+          <details class="details" id="requestPreviewWrap" style="display:none">
+            <summary>📡 生成说明（本次请求）</summary>
+            <div id="requestPreviewMobileHost" style="margin-top:8px"></div>
+          </details>
+          <div id="logMobileMount"></div>
           <button class="gbtn" id="generateBtn"><span class="sp"></span><span class="bt">🚀 开始生成</span></button>
           <div style="margin-top:9px;font-family:var(--fm);font-size:.63rem;color:var(--t3);text-align:center">支持“参考音频 + 控制指令”联合使用 · Ctrl+Enter 快速合成</div>
         </div>
@@ -788,6 +864,7 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
 </div>
 
 <div class="tt" id="toast"></div>
+<div class="la" id="logArea"><div class="sl" style="margin-top:10px">📋 请求日志</div><div class="lb" id="logBox"></div></div>
 <div class="modal" id="modal" aria-hidden="true">
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal-head">
@@ -800,14 +877,15 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
 </div>
 
 <script type="module">
+window.VOXCPM_RELAY_BASE = window.VOXCPM_RELAY_BASE || '';
 import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/+esm";
-
 const $ = id => document.getElementById(id);
 const S = { 
   voices: [], selectedVoice: null, client: null, generatedBlob: null, history: [],
   mediaRecorder: null, audioChunks: [], isRecording: false, recordedBlob: null,
   uploadedFile: null, hasTempAudio: false, playingVoice: null,
-  batchItems: [], batchGenerating: false
+  batchItems: [], batchGenerating: false,
+  useRelay: false, relayBase: ''
 };
 
 const els = {
@@ -844,6 +922,12 @@ const els = {
   historyDownloadBtn: $('historyDownloadBtn'),
   historyDeleteBtn: $('historyDeleteBtn'),
   toast: $('toast'), requestPreview: $('requestPreview'),
+  serviceDot: $('sD'), serviceText: $('sT'),
+  requestDesktopMount: $('requestDesktopMount'),
+  requestPreviewWrap: $('requestPreviewWrap'),
+  requestPreviewMobileHost: $('requestPreviewMobileHost'),
+  logDesktopMount: $('logDesktopMount'),
+  logMobileMount: $('logMobileMount'),
   modal: $('modal'), modalKicker: $('modalKicker'),
   modalTitle: $('modalTitle'), modalBody: $('modalBody'),
   modalActions: $('modalActions')
@@ -959,6 +1043,86 @@ function formatFileSize(bytes) {
 }
 function escapeHtml(s) {
   return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function arrangeResponsivePanels() {
+  const isMobile = window.matchMedia('(max-width: 600px)').matches;
+  if (isMobile) {
+    els.requestPreviewWrap.style.display = '';
+    els.requestPreviewWrap.open = false;
+    if (els.requestPreview.parentElement !== els.requestPreviewMobileHost) {
+      els.requestPreviewMobileHost.appendChild(els.requestPreview);
+      els.requestPreview.style.marginTop = '0';
+      els.requestPreview.style.marginBottom = '0';
+    }
+    els.requestDesktopMount.style.display = 'none';
+    if (els.logArea.parentElement !== els.logMobileMount) els.logMobileMount.appendChild(els.logArea);
+  } else {
+    els.requestPreviewWrap.style.display = 'none';
+    if (els.requestPreview.parentElement !== els.requestDesktopMount) {
+      els.requestDesktopMount.appendChild(els.requestPreview);
+      els.requestPreview.style.marginTop = '';
+      els.requestPreview.style.marginBottom = '12px';
+    }
+    els.requestDesktopMount.style.display = '';
+    if (els.logArea.parentElement !== els.logDesktopMount) els.logDesktopMount.appendChild(els.logArea);
+  }
+}
+function setServiceStatus(status, text) {
+  if (!els.serviceDot || !els.serviceText) return;
+  els.serviceDot.classList.remove('on', 'off', 'ck');
+  els.serviceDot.classList.add(status === 'ok' ? 'on' : status === 'error' ? 'off' : 'ck');
+  els.serviceText.textContent = text;
+}
+function getRelayBase() {
+  const queryRelay = new URLSearchParams(location.search).get('relay');
+  const fromWindow = window.VOXCPM_RELAY_BASE || '';
+  const sameOrigin = location.protocol.startsWith('http') ? location.origin : '';
+  const base = (queryRelay || fromWindow || sameOrigin).trim();
+  return base.replace(/\/$/, '');
+}
+function dataUrlToBlob(dataUrl) {
+  const [meta, body] = dataUrl.split(',');
+  const mime = meta.match(/data:(.*?);base64/)?.[1] || 'audio/wav';
+  const bytes = Uint8Array.from(atob(body || ''), c => c.charCodeAt(0));
+  return new Blob([bytes], { type: mime });
+}
+async function probeRelayAccess() {
+  const relayBase = getRelayBase();
+  if (!relayBase) return false;
+  try {
+    const res = await fetch(`${relayBase}/api/status`, { cache: 'no-store' });
+    if (!res.ok) return false;
+    const data = await res.json();
+    if (!data?.ok) return false;
+    S.useRelay = true;
+    S.relayBase = relayBase;
+    setServiceStatus('ok', `已切换海外中转 · ${data.space || data.relay || 'openbmb/VoxCPM-Demo'}`);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+async function probeServiceAccess() {
+  setServiceStatus('checking', '正在检测当前网络环境...');
+  const targets = [
+    'https://openbmb-voxcpm-demo.hf.space/',
+    'https://huggingface.co/spaces/openbmb/VoxCPM-Demo'
+  ];
+  for (const url of targets) {
+    try {
+      await Promise.race([
+        fetch(url, { method: 'GET', mode: 'no-cors', cache: 'no-store' }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+      ]);
+      S.useRelay = false;
+      S.relayBase = '';
+      setServiceStatus('ok', '已直连 HuggingFace · openbmb/VoxCPM-Demo');
+      return true;
+    } catch (_) {}
+  }
+  if (await probeRelayAccess()) return true;
+  setServiceStatus('error', '当前网络环境不支持 · HuggingFace 与海外中转均不可用');
+  return false;
 }
 function highlightJson(value) {
   const json = JSON.stringify(value, null, 2);
@@ -1949,14 +2113,67 @@ els.registerBtn.addEventListener('click', async () => {
 // 连接服务
 async function connect() {
   try {
-    toast('🔌 连接 VoxCPM 服务中...', '');
+    if (!S.client && !S.useRelay) {
+      const reachable = await probeServiceAccess();
+      if (!reachable) {
+        toast('当前网络环境不支持访问 HuggingFace Space，可改用海外中转', 'er');
+        return false;
+      }
+    }
+
+    if (S.useRelay) {
+      setServiceStatus('ok', `已切换海外中转 · ${S.relayBase || 'openbmb/VoxCPM-Demo'}`);
+      return true;
+    }
+
+    toast('🔌 连接 VoxCPM 服务中.', '');
     S.client = await Client.connect("openbmb/VoxCPM-Demo");
-    log('✅ 连接成功', 'rs'); return true;
+    setServiceStatus('ok', '已直连 HuggingFace · openbmb/VoxCPM-Demo');
+    log('✅ 连接成功', 'rs');
+    return true;
   } catch (e) {
-    log(`连接失败: ${e.message}`, 'er'); toast(`连接失败: ${e.message}`, 'er'); return false;
+    log(`直连失败，尝试切换海外中转: ${e.message}`, 'nf');
+
+    // 直连失败后，补一次真实的 relay 回退
+    const relayOk = await probeRelayAccess();
+    if (relayOk) {
+      S.client = null;
+      setServiceStatus('ok', `已切换海外中转 · ${S.relayBase || 'openbmb/VoxCPM-Demo'}`);
+      toast('已自动切换到海外中转', 'ok');
+      return true;
+    }
+
+    setServiceStatus('error', '当前网络环境不支持 · HuggingFace 与海外中转均不可用');
+    log(`连接失败: ${e.message}`, 'er');
+    toast(`连接失败: ${e.message}`, 'er');
+    return false;
   }
 }
 async function synthesizeAudio({ text, controlInstruction = '', referenceBlob = null }) {
+  if (S.useRelay) {
+    const formData = new FormData();
+    formData.append('text', text);
+    formData.append('controlInstruction', controlInstruction);
+    formData.append('cfgValue', String(parseFloat(els.cfgSlider.value)));
+    formData.append('doNormalize', String(els.doNormalize.checked));
+    formData.append('denoise', String(els.denoise.checked));
+    if (referenceBlob) {
+      formData.append('referenceAudio', referenceBlob, referenceBlob.name || 'reference.wav');
+    }
+    const res = await fetch(`${S.relayBase}/api/generate`, {
+      method: 'POST',
+      body: formData
+    });
+    if (!res.ok) {
+      const message = await res.text();
+      throw new Error(message || `中转请求失败：${res.status}`);
+    }
+    const data = await res.json();
+    if (!data?.base64) throw new Error(data?.error || '中转返回数据异常');
+    const blob = dataUrlToBlob(data.base64);
+    const url = URL.createObjectURL(blob);
+    return { url, blob, audio: data };
+  }
   const result = await S.client.predict("/generate", {
     text_input: text,
     control_instruction: controlInstruction,
@@ -2144,6 +2361,9 @@ document.addEventListener('keydown', e => { if ((e.ctrlKey||e.metaKey)&&e.key===
 
 // 初始化
 window.addEventListener('DOMContentLoaded', async () => {
+  arrangeResponsivePanels();
+  window.addEventListener('resize', arrangeResponsivePanels);
+  probeServiceAccess();
   await renderVoices();
   parseBatchScript();
   if (navigator.mediaDevices?.getUserMedia) {
