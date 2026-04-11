@@ -160,6 +160,11 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
 .modal-btn.secondary{background:var(--sf2);border:1px solid var(--bd);color:var(--t2)}
 .modal-btn.primary{background:linear-gradient(135deg,var(--cy),#2563eb);color:white;box-shadow:0 12px 24px rgba(59,130,246,.2)}
 .modal-btn.danger{background:linear-gradient(135deg,var(--rd),#dc2626);color:white;box-shadow:0 12px 24px rgba(239,68,68,.2)}
+.boot-state{display:flex;align-items:flex-start;gap:12px}
+.boot-spinner{width:18px;height:18px;border:2px solid rgba(59,130,246,.18);border-top-color:var(--cy);border-radius:50%;flex-shrink:0;animation:sp .7s linear infinite;margin-top:2px}
+.boot-copy{flex:1;min-width:0}
+.boot-copy strong{display:block;color:var(--t1);font-size:.92rem;margin-bottom:4px}
+.boot-copy span{display:block;color:var(--t2);font-size:.82rem;line-height:1.7}
 .sep{height:1px;background:var(--bd);margin:13px 0}
 
 /* 人物声音管理 */
@@ -885,7 +890,8 @@ const S = {
   mediaRecorder: null, audioChunks: [], isRecording: false, recordedBlob: null,
   uploadedFile: null, hasTempAudio: false, playingVoice: null,
   batchItems: [], batchGenerating: false,
-  useRelay: false, relayBase: ''
+  useRelay: false, relayBase: '',
+  bootChecking: false
 };
 
 const els = {
@@ -977,6 +983,7 @@ const idb = {
 };
 
 let modalResolver = null;
+let modalLocked = false;
 
 // 工具函数
 function toast(msg, type = '') {
@@ -985,6 +992,7 @@ function toast(msg, type = '') {
   setTimeout(() => els.toast.className = 'tt', 4000);
 }
 function closeModal(result = false) {
+  if (modalLocked) return;
   els.modal.classList.remove('show');
   els.modal.setAttribute('aria-hidden', 'true');
   els.modalActions.innerHTML = '';
@@ -998,10 +1006,12 @@ function openModal({
   title = '消息',
   body = '',
   highlight = '',
-  actions = [{ label: '知道了', style: 'primary', value: true }]
+  actions = [{ label: '知道了', style: 'primary', value: true }],
+  lock = false
 }) {
   return new Promise(resolve => {
     modalResolver = resolve;
+    modalLocked = !!lock;
     els.modalKicker.textContent = kicker;
     els.modalTitle.textContent = title;
     els.modalBody.innerHTML = `${body}${highlight ? `<div class="modal-highlight">${highlight}</div>` : ''}`;
@@ -1072,6 +1082,68 @@ function setServiceStatus(status, text) {
   els.serviceDot.classList.remove('on', 'off', 'ck');
   els.serviceDot.classList.add(status === 'ok' ? 'on' : status === 'error' ? 'off' : 'ck');
   els.serviceText.textContent = text;
+  if (S.bootChecking) updateBootModal(status, text);
+}
+function updateBootModal(status, text) {
+  const statusLabel = status === 'ok'
+    ? '接口已连接，正在初始化页面…'
+    : status === 'error'
+      ? '接口暂时不可达，正在自动重试…'
+      : '正在检测接口连接，请稍候…';
+  els.modalKicker.textContent = status === 'error' ? '连接失败' : '接口连接';
+  els.modalTitle.textContent = status === 'ok' ? '接口连接成功' : '正在连接接口';
+  els.modalBody.innerHTML = `
+    <div class="boot-state">
+      <div class="boot-spinner"></div>
+      <div class="boot-copy">
+        <strong>${escapeHtml(statusLabel)}</strong>
+        <span>${escapeHtml(text || '正在检测当前网络环境...')}</span>
+      </div>
+    </div>
+  `;
+  els.modalActions.innerHTML = '';
+}
+async function showBootModal() {
+  if (S.bootChecking) return;
+  S.bootChecking = true;
+  await openModal({
+    kicker: '接口连接',
+    title: '正在连接接口',
+    body: `
+      <div class="boot-state">
+        <div class="boot-spinner"></div>
+        <div class="boot-copy">
+          <strong>正在检测接口连接，请稍候…</strong>
+          <span>页面启动时会优先检测 HuggingFace 直连与中转服务状态。</span>
+        </div>
+      </div>
+    `,
+    actions: [],
+    lock: true
+  });
+}
+function hideBootModal() {
+  S.bootChecking = false;
+  modalLocked = false;
+  closeModal(true);
+}
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+async function ensureServiceReady() {
+  showBootModal();
+  while (true) {
+    const ok = await probeServiceAccess();
+    if (ok) {
+      updateBootModal('ok', S.useRelay
+        ? `已连接国内中转 · ${S.relayBase || 'cloudflare-worker'}`
+        : '已直连 HuggingFace · openbmb/VoxCPM-Demo');
+      await sleep(450);
+      hideBootModal();
+      return true;
+    }
+    await sleep(3000);
+  }
 }
 function getRelayBase() {
   const queryRelay = new URLSearchParams(location.search).get('relay');
@@ -2363,7 +2435,7 @@ document.addEventListener('keydown', e => { if ((e.ctrlKey||e.metaKey)&&e.key===
 window.addEventListener('DOMContentLoaded', async () => {
   arrangeResponsivePanels();
   window.addEventListener('resize', arrangeResponsivePanels);
-  probeServiceAccess();
+  await ensureServiceReady();
   await renderVoices();
   parseBatchScript();
   if (navigator.mediaDevices?.getUserMedia) {
