@@ -882,7 +882,12 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
 </div>
 
 <script type="module">
-window.VOXCPM_RELAY_BASE = window.VOXCPM_RELAY_BASE || '';
+// 可选：把你自己的中转地址直接写在这里。
+// 例如：
+// const BUILTIN_RELAY_BASE = "https://your-worker.workers.dev";
+// 留空则表示不内置，优先使用 URL 参数 ?relay=... 或同源 /api/status。
+const BUILTIN_RELAY_BASE = "";
+window.VOXCPM_RELAY_BASE = window.VOXCPM_RELAY_BASE || BUILTIN_RELAY_BASE;
 import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/+esm";
 const $ = id => document.getElementById(id);
 const S = { 

@@ -27,7 +27,8 @@
 
 1. 如果当前站点同源存在 `/api/status`，页面会优先使用同源中转
 2. 如果 URL 上带有 `?relay=https://你的中转域名`，页面会优先使用这个中转
-3. 如果两者都没有，再尝试直连 HuggingFace
+3. 如果 HTML 里写了内置中转地址，页面会使用这个中转
+4. 如果两者都没有，再尝试直连 HuggingFace
 
 如果你不想自己维护 VPS，可以直接使用 Cloudflare Worker 版本中转。仓库里已附带一个可独立部署的目录：
 
@@ -51,6 +52,25 @@
 ### 本地单文件使用
 
 直接打开根目录下的 `VoxCPM-TTS.html` 即可。
+
+如果你希望这个单文件页双击打开后就默认走自己的中转，可以直接编辑 HTML 顶部这段配置：
+
+```html
+<script type="module">
+const BUILTIN_RELAY_BASE = "https://你的域名";
+window.VOXCPM_RELAY_BASE = window.VOXCPM_RELAY_BASE || BUILTIN_RELAY_BASE;
+</script>
+```
+
+默认仓库里这项是空字符串，表示不写死中转地址。
+
+这样做之后，即使你直接本地打开：
+
+```text
+file:///D:/Code/AI/TTS/VoxCPM-TTS/VoxCPM-TTS.html
+```
+
+页面也会自动优先连接你写进 HTML 里的中转服务。
 
 如果你本地打开页面，但又想强制走已部署好的 Cloudflare 中转，可以在地址后面加：
 
@@ -194,6 +214,12 @@ file:///你的本地路径/VoxCPM-TTS.html?relay=https://你的域名
 1. 单文件可离线保存
 2. 本地打开时可走 Cloudflare 中转
 3. 在线部署时自动使用同源中转
+
+#### 两种本地中转写法怎么选
+
+1. 如果这是你自己长期使用的页面，推荐直接把 `BUILTIN_RELAY_BASE` 写进 HTML
+2. 如果你想保留一个通用版本给别人，推荐保持 HTML 里为空，然后使用 `?relay=https://你的域名`
+3. `?relay=...` 的优先级高于 HTML 里写死的地址，方便临时切换
 
 #### 常见说明
 
