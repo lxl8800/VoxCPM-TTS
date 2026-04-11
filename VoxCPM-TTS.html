@@ -417,7 +417,7 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
       <div class="badge"><span class="dot"></span> VoxCPM 2</div>
     </div>
     <h1>语音合成<b>工作台</b></h1>
-    <p class="sub">OpenBMB VoxCPM2 · 官方最佳实践 · 多语种/方言/克隆/风格控制</p>
+    <p class="sub">OpenBMB VoxCPM2 · 官方最佳实践 · 多语种/方言/克隆/风格控制 · 国内通常无法稳定直连 HuggingFace，走中转会稍慢；如已开启科学网络，直连生成通常会更快</p>
   </header>
 
   <div class="sbar">
@@ -768,6 +768,7 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
           <div class="batch-actions">
             <button class="batch-btn secondary" id="parseBatchBtn">解析脚本</button>
             <button class="batch-btn" id="generateBatchBtn">批量生成</button>
+            <button class="batch-btn" id="generateSelectedBatchBtn">生成选中</button>
             <button class="batch-btn secondary" id="refreshBatchBtn">刷新队列</button>
           </div>
           <div class="batch-status" id="batchStatus">先点击“解析脚本”，系统会先帮你检查角色匹配情况。</div>
@@ -776,7 +777,7 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
         <div class="batch-box">
           <div class="batch-toolbar">
             <h3 style="margin-bottom:0">生成队列</h3>
-            <label><input type="checkbox" id="batchSelectAll"> 全选已生成</label>
+            <label><input type="checkbox" id="batchSelectAll"> 全选条目</label>
           </div>
           <div class="batch-actions" style="margin-top:0;margin-bottom:12px">
             <button class="batch-btn success" id="downloadBatchBtn" disabled>下载选中</button>
@@ -886,7 +887,7 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
 // 例如：
 // const BUILTIN_RELAY_BASE = "https://your-worker.workers.dev";
 // 留空则表示不内置，优先使用 URL 参数 ?relay=... 或同源 /api/status。
-const BUILTIN_RELAY_BASE = "";
+const BUILTIN_RELAY_BASE = "https://voxcpm2.898800.xyz";
 window.VOXCPM_RELAY_BASE = window.VOXCPM_RELAY_BASE || BUILTIN_RELAY_BASE;
 import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/+esm";
 const $ = id => document.getElementById(id);
@@ -915,7 +916,7 @@ const els = {
   voiceList: $('voiceList'), registerBtn: $('registerBtn'),
   clearVoiceBtn: $('clearVoiceBtn'), voiceStatus: $('voiceStatus'),
   batchScript: $('batchScript'), parseBatchBtn: $('parseBatchBtn'),
-  generateBatchBtn: $('generateBatchBtn'), batchStatus: $('batchStatus'),
+  generateBatchBtn: $('generateBatchBtn'), generateSelectedBatchBtn: $('generateSelectedBatchBtn'), batchStatus: $('batchStatus'),
   refreshBatchBtn: $('refreshBatchBtn'),
   batchList: $('batchList'), batchSelectAll: $('batchSelectAll'),
   downloadBatchBtn: $('downloadBatchBtn'),
@@ -1173,7 +1174,7 @@ async function probeRelayAccess() {
     if (!data?.ok) return false;
     S.useRelay = true;
     S.relayBase = relayBase;
-    setServiceStatus('ok', `已切换海外中转 · ${data.space || data.relay || 'openbmb/VoxCPM-Demo'}`);
+    setServiceStatus('ok', `已切换海外中转 · ${relayBase}`);
     return true;
   } catch (_) {
     return false;
@@ -1548,12 +1549,15 @@ function updateBatchStatus(text) {
   els.batchStatus.textContent = text;
 }
 function updateBatchDownloadState() {
+  const selectable = S.batchItems.filter(it => it.valid);
+  const checkedItems = selectable.filter(it => it.checked);
+  const generatableSelected = checkedItems.filter(it => it.voice && !it.audioUrl && it.status !== 'generating');
   const downloadable = S.batchItems.filter(it => it.audioUrl && it.checked);
   els.downloadBatchBtn.disabled = downloadable.length === 0;
-  const generated = S.batchItems.filter(it => it.audioUrl);
-  const allChecked = generated.length > 0 && generated.every(it => it.checked);
+  if (els.generateSelectedBatchBtn) els.generateSelectedBatchBtn.disabled = generatableSelected.length === 0 || S.batchGenerating;
+  const allChecked = selectable.length > 0 && selectable.every(it => it.checked);
   els.batchSelectAll.checked = allChecked;
-  els.batchSelectAll.indeterminate = generated.length > 0 && !allChecked && generated.some(it => it.checked);
+  els.batchSelectAll.indeterminate = selectable.length > 0 && !allChecked && checkedItems.length > 0;
 }
 function updateHistoryActions() {
   const checked = S.history.filter(it => it.checked);
@@ -1587,7 +1591,7 @@ function renderBatchItems() {
     return `<div class="batch-item">
       <div class="batch-item-top">
         <div class="batch-item-left">
-          <input type="checkbox" data-batch-check="${idx}" ${item.checked ? 'checked' : ''} ${item.audioUrl ? '' : 'disabled'}>
+          <input type="checkbox" data-batch-check="${idx}" ${item.checked ? 'checked' : ''} aria-label="选择条目用于生成或下载">
           <span class="batch-seq">${escapeHtml(item.seq)}</span>
           <div class="batch-main">
             <div class="batch-header">
@@ -1696,7 +1700,7 @@ function parseBatchScript() {
   const validCount = S.batchItems.filter(it => it.valid).length;
   const matchedCount = S.batchItems.filter(it => it.valid && it.voice).length;
   renderBatchItems();
-  updateBatchStatus(`已解析 ${validCount} 条对白，匹配到 ${matchedCount} 条人物。未匹配项会保留在列表里，等你在人物库里补充角色后可重新解析。`);
+  updateBatchStatus(`已解析 ${validCount} 条对白，匹配到 ${matchedCount} 条人物。可以直接点“批量生成”生成全部已匹配条目，或先勾选若干条再点“生成选中”。`);
 }
 els.parseBatchBtn.addEventListener('click', parseBatchScript);
 async function refreshBatchQueue() {
@@ -1721,7 +1725,7 @@ async function refreshBatchQueue() {
 els.refreshBatchBtn.addEventListener('click', refreshBatchQueue);
 els.batchSelectAll.addEventListener('change', () => {
   S.batchItems.forEach(item => {
-    if (item.audioUrl) item.checked = els.batchSelectAll.checked;
+    if (item.valid) item.checked = els.batchSelectAll.checked;
   });
   renderBatchItems();
 });
@@ -2202,7 +2206,7 @@ async function connect() {
     }
 
     if (S.useRelay) {
-      setServiceStatus('ok', `已切换海外中转 · ${S.relayBase || 'openbmb/VoxCPM-Demo'}`);
+      setServiceStatus('ok', `已切换海外中转 · ${S.relayBase || 'cloudflare-worker'}`);
       return true;
     }
 
@@ -2218,7 +2222,7 @@ async function connect() {
     const relayOk = await probeRelayAccess();
     if (relayOk) {
       S.client = null;
-      setServiceStatus('ok', `已切换海外中转 · ${S.relayBase || 'openbmb/VoxCPM-Demo'}`);
+      setServiceStatus('ok', `已切换海外中转 · ${S.relayBase || 'cloudflare-worker'}`);
       toast('已自动切换到海外中转', 'ok');
       return true;
     }
@@ -2354,20 +2358,21 @@ async function generate() {
     els.generateBtn.classList.remove('ld'); els.generateBtn.disabled = false;
   }
 }
-async function generateBatch() {
+async function generateBatch({ selectedOnly = false } = {}) {
   if (S.batchGenerating) return;
   if (!S.batchItems.length) parseBatchScript();
-  const queue = S.batchItems.filter(it => it.valid && it.voice);
+  const queue = S.batchItems.filter(it => it.valid && it.voice && (!selectedOnly || it.checked) && !it.audioUrl);
   if (!queue.length) {
-    updateBatchStatus('没有可生成的条目。请先解析脚本，并确认角色名称能匹配到人物库。');
+    updateBatchStatus(selectedOnly ? '没有可生成的已选条目。请先勾选已匹配人物的条目。' : '没有可生成的条目。请先解析脚本，并确认角色名称能匹配到人物库。');
     return;
   }
   if (!S.client && !(await connect())) return;
 
   S.batchGenerating = true;
   els.generateBatchBtn.disabled = true;
+  if (els.generateSelectedBatchBtn) els.generateSelectedBatchBtn.disabled = true;
   els.parseBatchBtn.disabled = true;
-  updateBatchStatus(`开始批量生成，共 ${queue.length} 条。`);
+  updateBatchStatus(`${selectedOnly ? '开始生成选中条目' : '开始批量生成'}，共 ${queue.length} 条。`);
 
   for (const item of queue) {
     item.status = 'generating';
@@ -2396,12 +2401,14 @@ async function generateBatch() {
 
   S.batchGenerating = false;
   els.generateBatchBtn.disabled = false;
+  updateBatchDownloadState();
   els.parseBatchBtn.disabled = false;
   const success = S.batchItems.filter(it => it.status === 'done').length;
   const failed = S.batchItems.filter(it => it.status === 'error').length;
-  updateBatchStatus(`批量生成完成：成功 ${success} 条，失败 ${failed} 条。可勾选后点击“下载选中”。`);
+  updateBatchStatus(`${selectedOnly ? '生成选中完成' : '批量生成完成'}：成功 ${success} 条，失败 ${failed} 条。勾选条目可继续直接批量下载。`);
 }
-els.generateBatchBtn.addEventListener('click', generateBatch);
+els.generateBatchBtn.addEventListener('click', () => generateBatch({ selectedOnly: false }));
+els.generateSelectedBatchBtn.addEventListener('click', () => generateBatch({ selectedOnly: true }));
 
 // 下载/播放
 els.downloadBtn.addEventListener('click', async () => {
