@@ -1198,10 +1198,12 @@ async function probeDirectAccess() {
 }
 async function probeServiceAccess() {
   setServiceStatus('checking', '正在检测当前网络环境...');
+  // ① 优先尝试直连
+  if (await probeDirectAccess()) return true;
+  // ② 直连失败后，尝试中转（需已配置）
   const relayBase = getRelayBase();
   if (relayBase && await probeRelayAccess()) return true;
-  if (await probeDirectAccess()) return true;
-  if (await probeRelayAccess()) return true;
+  // ③ 全部失败
   setServiceStatus('error', '当前网络环境不支持 · HuggingFace 与海外中转均不可用');
   return false;
 }
