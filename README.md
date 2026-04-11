@@ -67,7 +67,7 @@ window.VOXCPM_RELAY_BASE = window.VOXCPM_RELAY_BASE || BUILTIN_RELAY_BASE;
 这样做之后，即使你直接本地打开：
 
 ```text
-file:///D:/Code/AI/TTS/VoxCPM-TTS/VoxCPM-TTS.html
+file:///D:/Code/AI/TTS/VoxCPM-TTS.html
 ```
 
 页面也会自动优先连接你写进 HTML 里的中转服务。
@@ -81,7 +81,7 @@ file:///D:/Code/AI/TTS/VoxCPM-TTS/VoxCPM-TTS.html
 例如：
 
 ```text
-file:///D:/Code/AI/TTS/VoxCPM-TTS/VoxCPM-TTS.html?relay=https://your-worker.workers.dev
+file:///D:/Code/AI/TTS/VoxCPM-TTS.html?relay=https://your-worker.workers.dev
 ```
 
 ### Cloudflare 打包部署
@@ -104,7 +104,7 @@ file:///D:/Code/AI/TTS/VoxCPM-TTS/VoxCPM-TTS.html?relay=https://your-worker.work
 
 1. 先 `Fork` 当前项目到自己的 GitHub
 2. 再让 Cloudflare 直接导入这个仓库
-3. 部署时把工作目录指向 `VoxCPM-TTS/voxcpm-worker-relay`
+3. 部署时把工作目录指向 `voxcpm-worker-relay`
 
 具体步骤如下。
 
@@ -137,7 +137,7 @@ https://github.com/你的用户名/VoxCPM-TTS
 1. `Root directory`：
 
 ```text
-VoxCPM-TTS/voxcpm-worker-relay
+voxcpm-worker-relay
 ```
 
 2. `Build command`：
