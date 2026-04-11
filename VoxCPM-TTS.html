@@ -1,0 +1,2158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🗣️ VoxCPM 2 语音合成工作台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Mono:wght@300;400;500&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f8fafc;--bg2:#ffffff;
+  --sf:#ffffff;--sf2:#f1f5f9;--sf3:#e2e8f0;
+  --bd:#e2e8f0;--bd2:#cbd5e1;
+  --t1:#0f172a;--t2:#475569;--t3:#94a3b8;
+  --cy:#3b82f6;--cy2:#3b82f615;--cy3:#3b82f640;
+  --mg:#8b5cf6;--mg2:#8b5cf615;--mg3:#8b5cf640;
+  --gn:#22c55e;--gn2:#22c55e15;
+  --am:#f59e0b;--am2:#f59e0b15;
+  --rd:#ef4444;--rd2:#ef444415;
+  --r:14px;--r2:10px;--r3:6px;
+  --f:'Noto Sans SC',sans-serif;
+  --fm:'DM Mono',monospace;
+  --fd:'Space Grotesk','Noto Sans SC',sans-serif;
+}
+html{font-size:15px}
+body{background:var(--bg);color:var(--t1);font-family:var(--f);min-height:100vh;overflow-x:hidden;line-height:1.65}
+.bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(59,130,246,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.06) 1px,transparent 1px);
+  background-size:60px 60px;mask-image:radial-gradient(ellipse 80% 60% at 50% 30%,black,transparent)}
+.orb{position:fixed;border-radius:50%;filter:blur(100px);pointer-events:none;z-index:0}
+.orb-1{width:500px;height:500px;background:var(--cy);opacity:.08;top:-150px;right:-100px;animation:of 20s ease-in-out infinite}
+.orb-2{width:400px;height:400px;background:var(--mg);opacity:.06;bottom:-100px;left:-80px;animation:of 25s ease-in-out infinite reverse}
+@keyframes of{0%,100%{transform:translate(0,0)}33%{transform:translate(30px,-20px)}66%{transform:translate(-20px,30px)}}
+.app{position:relative;z-index:2;max-width:1260px;margin:0 auto;padding:32px 28px 80px}
+.hdr{margin-bottom:36px;opacity:0;animation:sd .8s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes sd{from{opacity:0;transform:translateY(-18px)}to{opacity:1;transform:translateY(0)}}
+.hdr-t{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.logo{width:38px;height:38px;border-radius:var(--r2);background:linear-gradient(135deg,var(--cy),var(--mg));display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-weight:700;font-size:.95rem;color:white;flex-shrink:0}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 12px;border-radius:100px;background:var(--cy2);border:1px solid var(--cy3);font-family:var(--fm);font-size:.66rem;color:var(--cy);letter-spacing:.08em;text-transform:uppercase}
+.badge .dot{width:5px;height:5px;border-radius:50%;background:var(--gn);box-shadow:0 0 6px var(--gn);animation:bl 2s ease infinite}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:.2}}
+.hdr h1{font-family:var(--fd);font-size:2.2rem;font-weight:300;line-height:1.1;letter-spacing:-.03em;margin-bottom:5px}
+.hdr h1 b{font-weight:700;background:linear-gradient(135deg,var(--cy),var(--mg));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hdr .sub{font-size:.85rem;color:var(--t2);max-width:620px;line-height:1.7}
+.sbar{display:flex;align-items:center;gap:10px;padding:9px 15px;margin-bottom:18px;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r2);font-family:var(--fm);font-size:.7rem;color:var(--t2);opacity:0;animation:su .6s ease .2s forwards}
+.sd{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.sd.on{background:var(--gn);box-shadow:0 0 8px rgba(34,197,94,.5)}
+@keyframes su{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.tabs{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px;padding:10px 12px;background:rgba(255,255,255,.72);border:1px solid rgba(203,213,225,.9);border-radius:18px;backdrop-filter:blur(12px);box-shadow:0 10px 40px rgba(15,23,42,.06)}
+.tab-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 15px;border:none;border-radius:999px;background:transparent;color:var(--t2);font-family:var(--fd);font-size:.86rem;font-weight:600;cursor:pointer;transition:all .22s}
+.tab-btn:hover{background:var(--sf2);color:var(--t1)}
+.tab-btn.active{background:linear-gradient(135deg,var(--cy),var(--mg));color:white;box-shadow:0 10px 24px rgba(59,130,246,.22)}
+.tab-link{margin-left:auto;display:inline-flex;align-items:center;gap:7px;padding:9px 13px;border:1px solid var(--bd);border-radius:999px;background:var(--sf);color:var(--t2);font-family:var(--fm);font-size:.7rem;text-decoration:none;transition:all .2s}
+.tab-link:hover{border-color:var(--cy);color:var(--cy);transform:translateY(-1px)}
+.page{display:none}
+.page.active{display:block;animation:su .45s ease forwards}
+.grid{display:grid;grid-template-columns:1fr 380px;gap:18px;align-items:start}
+@media(max-width:960px){.grid{grid-template-columns:1fr}}
+.pnl{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;opacity:0;animation:su .6s ease forwards;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.pnl:nth-child(1){animation-delay:.12s}.pnl:nth-child(2){animation-delay:.22s}
+.pnl-h{display:flex;align-items:center;gap:9px;padding:13px 20px;border-bottom:1px solid var(--bd);font-family:var(--fm);font-size:.7rem;color:var(--t2);letter-spacing:.07em;text-transform:uppercase;background:var(--sf2)}
+.pnl-h .ic{font-size:.9rem}
+.pnl-b{padding:20px}
+.ta-w{position:relative;margin-bottom:14px}
+.ta{width:100%;min-height:120px;max-height:300px;padding:15px 17px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r2);color:var(--t1);font-family:var(--f);font-size:.9rem;line-height:1.75;resize:vertical;transition:border-color .2s,box-shadow .2s}
+.ta:focus{outline:none;border-color:var(--cy);box-shadow:0 0 0 3px var(--cy2)}
+.ta::placeholder{color:var(--t3)}
+.cn{position:absolute;bottom:10px;right:13px;font-family:var(--fm);font-size:.66rem;color:var(--t3)}
+.sl{font-family:var(--fm);font-size:.66rem;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;margin:8px 0 7px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.chip{padding:5px 12px;border-radius:100px;background:var(--sf2);border:1px solid var(--bd);font-size:.76rem;color:var(--t2);cursor:pointer;transition:all .2s;user-select:none}
+.chip:hover{border-color:var(--cy);color:var(--cy);background:var(--cy2)}
+.chip.on{background:var(--cy);border-color:var(--cy);color:white}
+.chip.mg{background:var(--mg2);border-color:rgba(139,92,246,.3);color:var(--mg)}
+.chip.mg:hover{border-color:var(--mg);background:rgba(139,92,246,.15)}
+.chip.mg.on{background:var(--mg);border-color:var(--mg);color:white}
+.ci{width:100%;padding:9px 13px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r2);color:var(--t1);font-family:var(--f);font-size:.82rem;transition:border-color .2s,box-shadow .2s;margin-bottom:12px}
+.ci:focus{outline:none;border-color:var(--cy);box-shadow:0 0 0 3px var(--cy2)}
+.ci::placeholder{color:var(--t3)}
+.snd{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.snd-cat{width:100%;margin-bottom:8px}
+.snd-cat-title{font-size:.7rem;color:var(--t3);margin-bottom:4px;font-family:var(--fm);letter-spacing:.05em}
+.sb{display:flex;align-items:center;gap:4px;padding:5px 10px;background:var(--sf2);border:1px solid var(--bd);border-radius:var(--r3);font-size:.74rem;color:var(--t2);cursor:pointer;transition:all .2s}
+.sb:hover{border-color:var(--cy);color:var(--cy);background:var(--cy2)}
+.sb .tag{font-family:var(--fm);font-size:.65rem;color:var(--cy);opacity:.8}
+.cg{margin-bottom:14px}.cg:last-child{margin-bottom:0}
+.cl{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;font-size:.78rem;color:var(--t2)}
+.cl .v{font-family:var(--fm);font-size:.7rem;color:var(--cy)}
+input[type="range"]{-webkit-appearance:none;width:100%;height:3px;background:var(--sf3);border-radius:2px;outline:none}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:var(--cy);border-radius:50%;cursor:pointer;box-shadow:0 0 10px var(--cy3);transition:transform .15s}
+input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
+.sel{width:100%;padding:9px 13px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r2);color:var(--t1);font-family:var(--f);font-size:.82rem;cursor:pointer;outline:none;transition:border-color .2s}
+.sel:focus{border-color:var(--cy)}
+.gbtn{width:100%;padding:13px;border:none;border-radius:var(--r2);background:linear-gradient(135deg,var(--cy),#2563eb);color:white;font-family:var(--fd);font-size:.9rem;font-weight:600;cursor:pointer;transition:all .25s;letter-spacing:.02em;position:relative;overflow:hidden}
+.gbtn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 40%,rgba(255,255,255,.2) 50%,transparent 60%);transform:translateX(-100%);transition:transform .6s}
+.gbtn:hover::before{transform:translateX(100%)}
+.gbtn:hover{transform:translateY(-1px);box-shadow:0 8px 28px var(--cy3)}
+.gbtn:active{transform:translateY(0)}
+.gbtn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.gbtn:disabled::before{display:none}
+.gbtn .sp{display:none;width:15px;height:15px;border:2px solid transparent;border-top-color:white;border-radius:50%;animation:sp .7s linear infinite;margin-right:7px;vertical-align:middle}
+.gbtn.ld .sp{display:inline-block}.gbtn.ld .bt{opacity:.7}
+@keyframes sp{to{transform:rotate(360deg)}}
+.ra{margin-top:20px;display:none}
+.ra.vis{display:block;animation:su .5s ease forwards}
+.rc{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.rh{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+.rt{font-family:var(--fm);font-size:.72rem;color:var(--gn);letter-spacing:.06em;text-transform:uppercase}
+.dl{padding:6px 13px;background:var(--sf2);border:1px solid var(--bd);border-radius:var(--r3);color:var(--t2);font-family:var(--fm);font-size:.7rem;cursor:pointer;transition:all .2s;text-decoration:none;white-space:nowrap}
+.dl:hover{border-color:var(--cy);color:var(--cy)}
+.pl{display:flex;align-items:center;gap:11px;padding:13px 16px;background:var(--bg2);border-radius:var(--r2);border:1px solid var(--bd)}
+.pb{width:42px;height:42px;display:flex;align-items:center;justify-content:center;background:var(--cy);border:none;border-radius:50%;cursor:pointer;flex-shrink:0;transition:all .2s;font-size:1rem;color:white}
+.pb:hover{transform:scale(1.08);box-shadow:0 4px 18px var(--cy3)}
+.pw{flex:1;display:flex;flex-direction:column;gap:4px}
+.pbr{width:100%;height:4px;background:var(--sf3);border-radius:2px;overflow:hidden;cursor:pointer}
+.pf{height:100%;background:var(--cy);border-radius:2px;width:0%;transition:width .1s linear}
+.td{display:flex;justify-content:space-between;font-family:var(--fm);font-size:.66rem;color:var(--t3)}
+.ui{display:flex;gap:14px;margin-top:10px;padding:9px 13px;background:var(--bg2);border-radius:var(--r2);border:1px solid var(--bd);font-family:var(--fm);font-size:.66rem;color:var(--t3)}
+.ui .uv{color:var(--cy)}
+.la{margin-top:14px;display:none}
+.la.vis{display:block;animation:su .4s ease}
+.lb{max-height:200px;overflow-y:auto;padding:11px 13px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r2);font-family:var(--fm);font-size:.68rem;line-height:1.9;color:var(--t3)}
+.lb .l{margin-bottom:1px;word-break:break-all}
+.lb .rq{color:var(--cy)}.lb .rs{color:var(--gn)}.lb .er{color:var(--rd)}.lb .nf{color:var(--am)}
+.hs{margin-top:20px;display:none}
+.hs.vis{display:block;animation:su .5s ease}
+.hl{display:flex;flex-direction:column;gap:6px}
+.hi{display:flex;align-items:center;gap:11px;padding:10px 13px;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r2);cursor:pointer;transition:all .2s}
+.hi:hover{border-color:var(--cy);background:var(--cy2)}
+.history-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.history-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.history-check{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;color:var(--t2);cursor:pointer}
+.history-mini{padding:6px 10px;border:1px solid var(--bd);border-radius:999px;background:var(--sf);color:var(--t2);font-family:var(--fm);font-size:.66rem;cursor:pointer;transition:all .2s}
+.history-mini:hover{border-color:var(--cy);color:var(--cy)}
+.history-mini.danger:hover{border-color:var(--rd);color:var(--rd)}
+.hp{width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:var(--cy2);border:1px solid var(--cy3);border-radius:50%;color:var(--cy);font-size:.7rem;flex-shrink:0;cursor:pointer;transition:all .2s}
+.hp:hover{background:var(--cy);color:white}
+.hf{flex:1;min-width:0}
+.ht{font-size:.78rem;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hm{font-family:var(--fm);font-size:.63rem;color:var(--t3);margin-top:2px}
+.tt{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(100px);padding:11px 20px;background:white;border:1px solid var(--bd);border-radius:var(--r2);font-size:.82rem;color:var(--t1);z-index:1000;transition:transform .4s cubic-bezier(.16,1,.3,1);pointer-events:none;max-width:88vw;box-shadow:0 4px 20px rgba(0,0,0,.1)}
+.tt.show{transform:translateX(-50%) translateY(0)}
+.tt.er{border-color:var(--rd);color:var(--rd)}.tt.ok{border-color:var(--gn);color:var(--gn)}
+.modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(15,23,42,.38);backdrop-filter:blur(8px);z-index:1200}
+.modal.show{display:flex;animation:su .22s ease}
+.modal-card{width:min(480px,92vw);background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(248,250,252,.98));border:1px solid rgba(203,213,225,.95);border-radius:24px;box-shadow:0 30px 80px rgba(15,23,42,.18);overflow:hidden}
+.modal-head{padding:18px 20px 12px;border-bottom:1px solid var(--bd);background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(139,92,246,.08))}
+.modal-kicker{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:var(--sf);border:1px solid var(--bd);font-family:var(--fm);font-size:.64rem;color:var(--t2);letter-spacing:.06em;text-transform:uppercase}
+.modal-title{font-family:var(--fd);font-size:1.08rem;color:var(--t1);margin-top:10px}
+.modal-body{padding:16px 20px;color:var(--t2);font-size:.86rem;line-height:1.8}
+.modal-highlight{margin-top:10px;padding:12px 14px;background:var(--sf2);border:1px solid var(--bd);border-radius:14px;color:var(--t1);font-size:.82rem}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;padding:0 20px 20px}
+.modal-btn{min-width:88px;height:40px;padding:0 16px;border:none;border-radius:12px;font-family:var(--fd);font-size:.82rem;font-weight:700;cursor:pointer;transition:transform .18s,box-shadow .18s}
+.modal-btn:hover{transform:translateY(-1px)}
+.modal-btn.secondary{background:var(--sf2);border:1px solid var(--bd);color:var(--t2)}
+.modal-btn.primary{background:linear-gradient(135deg,var(--cy),#2563eb);color:white;box-shadow:0 12px 24px rgba(59,130,246,.2)}
+.modal-btn.danger{background:linear-gradient(135deg,var(--rd),#dc2626);color:white;box-shadow:0 12px 24px rgba(239,68,68,.2)}
+.sep{height:1px;background:var(--bd);margin:13px 0}
+
+/* 人物声音管理 */
+.voice-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;max-height:140px;overflow-y:auto;padding-right:4px}
+.voice-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.voice-status{font-size:.74rem;color:var(--t3)}
+.ghost-btn{padding:7px 11px;border:1px solid var(--bd);border-radius:999px;background:var(--sf);color:var(--t2);font-family:var(--fm);font-size:.68rem;cursor:pointer;transition:all .2s}
+.ghost-btn:hover{border-color:var(--cy);color:var(--cy);background:var(--cy2)}
+.ghost-btn:disabled{opacity:.45;cursor:not-allowed;background:var(--sf)}
+.voice-chip{display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--sf2);border:1px solid var(--bd);border-radius:20px;font-size:.76rem;color:var(--t2);cursor:pointer;transition:all .2s}
+.voice-chip:hover{border-color:var(--cy)}
+.voice-chip.on{background:var(--cy);border-color:var(--cy);color:white}
+.voice-chip .key{font-family:var(--fm);font-size:.68rem;opacity:.85}
+.voice-chip .actions{display:flex;gap:4px;margin-left:auto}
+.voice-chip .play-btn{background:var(--cy);color:white;border:none;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.7rem;transition:all .2s}
+.voice-chip .play-btn:hover{transform:scale(1.1);background:var(--cy3)}
+.voice-chip .rm{opacity:.6;font-size:.9rem;cursor:pointer;transition:all .2s}
+.voice-chip .rm:hover{opacity:1;color:var(--rd)}
+
+/* 风格预设 */
+.ex-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.ex-chip{padding:5px 11px;border-radius:var(--r3);background:var(--mg2);border:1px solid rgba(139,92,246,.3);font-size:.72rem;color:var(--mg);cursor:pointer;transition:all .2s}
+.ex-chip:hover{border-color:var(--mg);background:rgba(139,92,246,.15)}
+.style-bar,.preview-box{padding:12px 13px;background:linear-gradient(180deg,var(--bg2),var(--sf2));border:1px solid var(--bd);border-radius:var(--r2);font-size:.76rem;line-height:1.7;color:var(--t2)}
+.style-bar{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;min-height:46px;align-items:center}
+.style-bar .tag{display:inline-flex;align-items:center;padding:5px 10px;border-radius:999px;background:var(--cy2);border:1px solid var(--cy3);color:var(--cy);font-family:var(--fm);font-size:.68rem}
+.preview-box{font-family:var(--fm);word-break:break-word;margin-bottom:12px;white-space:pre-wrap}
+.curl-cmd{color:var(--cy);font-weight:600}
+.curl-flag{color:var(--mg)}
+.curl-str{color:#0f766e}
+.curl-num{color:#7c3aed}
+.curl-bool{color:#b45309}
+.curl-null{color:var(--t3);font-style:italic}
+.json-key{color:var(--cy)}
+.json-string{color:#0f766e}
+.json-number{color:#7c3aed}
+.json-boolean{color:#b45309}
+.json-null{color:var(--t3);font-style:italic}
+.action-row{display:flex;gap:10px;align-items:center}
+.apply-btn{height:40px;padding:0 18px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--mg),#7c3aed);color:white;font-family:var(--fd);font-size:.84rem;font-weight:700;cursor:pointer;transition:transform .22s,box-shadow .22s,filter .22s;box-shadow:0 12px 24px rgba(139,92,246,.22);white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.apply-btn:hover{transform:translateY(-1px);filter:saturate(1.08);box-shadow:0 16px 28px rgba(139,92,246,.28)}
+.apply-btn:active{transform:translateY(0)}
+.guide-page{display:grid;gap:18px}
+.guide-hero{padding:24px 24px 20px;background:linear-gradient(135deg,rgba(59,130,246,.12),rgba(139,92,246,.1));border:1px solid rgba(59,130,246,.18);border-radius:24px;box-shadow:0 24px 60px rgba(15,23,42,.08)}
+.guide-hero h2{font-family:var(--fd);font-size:1.55rem;line-height:1.15;letter-spacing:-.03em;margin-bottom:10px}
+.guide-hero p{font-size:.92rem;color:var(--t2);max-width:840px}
+.guide-link-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.guide-link{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:white;border:1px solid rgba(59,130,246,.18);color:var(--t1);font-family:var(--fm);font-size:.72rem;text-decoration:none;transition:all .2s}
+.guide-link:hover{transform:translateY(-1px);border-color:var(--cy);color:var(--cy)}
+.guide-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.guide-card{padding:18px;background:var(--sf);border:1px solid var(--bd);border-radius:18px;box-shadow:0 8px 30px rgba(15,23,42,.05)}
+.guide-card h3{font-family:var(--fd);font-size:1rem;margin-bottom:10px}
+.guide-card p{font-size:.84rem;color:var(--t2);margin-bottom:10px}
+.guide-card ul{padding-left:18px;color:var(--t2);font-size:.82rem;line-height:1.8}
+.guide-card li+li{margin-top:4px}
+.guide-note{padding:12px 14px;background:var(--sf2);border:1px solid var(--bd);border-radius:12px;font-size:.78rem;color:var(--t2)}
+.guide-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.step-card{padding:15px;background:var(--sf);border:1px solid var(--bd);border-radius:16px}
+.step-card .k{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;margin-bottom:10px;background:var(--cy2);border:1px solid var(--cy3);font-family:var(--fm);font-size:.72rem;color:var(--cy)}
+.step-card h4{font-size:.88rem;margin-bottom:6px}
+.step-card p{font-size:.78rem;color:var(--t2)}
+.batch-page{display:grid;gap:18px}
+.batch-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;align-items:start}
+.batch-hero{padding:18px 20px;background:linear-gradient(135deg,rgba(34,197,94,.12),rgba(59,130,246,.1));border:1px solid rgba(34,197,94,.22);border-radius:22px;box-shadow:0 18px 40px rgba(15,23,42,.06)}
+.batch-hero h2{font-family:var(--fd);font-size:1.35rem;line-height:1.15;margin-bottom:8px}
+.batch-hero p{font-size:.86rem;color:var(--t2)}
+.batch-box{background:var(--sf);border:1px solid var(--bd);border-radius:18px;padding:18px;box-shadow:0 8px 30px rgba(15,23,42,.05)}
+.batch-box h3{font-family:var(--fd);font-size:1rem;margin-bottom:10px}
+.batch-textarea{width:100%;min-height:320px;padding:15px 16px;background:var(--bg2);border:1px solid var(--bd);border-radius:14px;color:var(--t1);font-family:var(--f);font-size:.88rem;line-height:1.8;resize:vertical;transition:border-color .2s,box-shadow .2s}
+.batch-textarea:focus{outline:none;border-color:var(--cy);box-shadow:0 0 0 3px var(--cy2)}
+.batch-tip{margin-top:10px;font-size:.75rem;color:var(--t3);line-height:1.7}
+.batch-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.batch-btn{padding:10px 14px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--cy),#2563eb);color:white;font-family:var(--fd);font-size:.82rem;font-weight:700;cursor:pointer;transition:transform .2s,box-shadow .2s}
+.batch-btn:hover{transform:translateY(-1px);box-shadow:0 12px 24px rgba(59,130,246,.22)}
+.batch-btn.secondary{background:linear-gradient(135deg,var(--mg),#7c3aed)}
+.batch-btn.success{background:linear-gradient(135deg,var(--gn),#16a34a)}
+.batch-btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none;transform:none}
+.batch-status{margin-top:10px;padding:10px 12px;background:var(--sf2);border:1px solid var(--bd);border-radius:12px;font-size:.76rem;color:var(--t2)}
+.batch-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.batch-toolbar label{display:inline-flex;align-items:center;gap:7px;font-size:.76rem;color:var(--t2);cursor:pointer}
+.batch-list{display:flex;flex-direction:column;gap:10px;max-height:760px;overflow-y:auto;padding-right:4px}
+.batch-item{padding:12px 13px;background:var(--bg2);border:1px solid var(--bd);border-radius:14px}
+.batch-item-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.batch-item-left{display:flex;gap:10px;flex:1;min-width:0}
+.batch-item-left input[type="checkbox"]{margin-top:3px}
+.batch-seq{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;border-radius:50%;background:var(--cy2);border:1px solid var(--cy3);font-family:var(--fm);font-size:.7rem;color:var(--cy);flex-shrink:0}
+.batch-main{min-width:0;flex:1}
+.batch-header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.batch-role{font-size:.85rem;font-weight:600;color:var(--t1)}
+.batch-role-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-width:0;flex:1}
+.batch-voice-select{min-width:210px;max-width:260px;flex:0 0 240px}
+.batch-line{font-size:.8rem;color:var(--t2);line-height:1.7;margin-top:4px;word-break:break-word}
+.batch-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.batch-pill{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;border:1px solid var(--bd);background:var(--sf);font-family:var(--fm);font-size:.65rem;color:var(--t2)}
+.batch-pill.ok{border-color:rgba(34,197,94,.35);background:var(--gn2);color:#15803d}
+.batch-pill.warn{border-color:rgba(245,158,11,.35);background:var(--am2);color:#b45309}
+.batch-pill.err{border-color:rgba(239,68,68,.35);background:var(--rd2);color:#b91c1c}
+.batch-item audio{width:100%;margin-top:10px}
+.batch-download{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid var(--bd);border-radius:999px;background:var(--sf);color:var(--t2);font-family:var(--fm);font-size:.68rem;text-decoration:none;cursor:pointer;transition:all .2s}
+.batch-download:hover{border-color:var(--cy);color:var(--cy)}
+
+/* 方言指南表格样式 */
+.dialect-table{width:100%;border-collapse:collapse;font-size:.78rem;margin:8px 0}
+.dialect-table th,.dialect-table td{padding:6px 8px;border:1px solid var(--bd);text-align:left}
+.dialect-table th{background:var(--sf2);font-weight:600;color:var(--t1)}
+.dialect-table code{background:var(--sf3);padding:2px 5px;border-radius:3px;font-family:var(--fm);font-size:.75rem}
+
+/* 标签提示卡片 */
+.tag-tip{padding:10px 12px;background:var(--cy2);border:1px solid var(--cy3);border-radius:var(--r2);font-size:.75rem;color:var(--t2);line-height:1.6;margin-bottom:12px}
+.tag-tip code{background:var(--sf3);padding:2px 6px;border-radius:4px;font-family:var(--fm);color:var(--cy)}
+.tag-tip .warn{color:var(--rd);font-weight:500}
+
+/* 最佳实践提示 */
+.best-practice{padding:10px 12px;background:var(--gn2);border:1px solid var(--gn);border-radius:var(--r2);font-size:.75rem;color:var(--t2);line-height:1.6;margin:8px 0}
+.best-practice strong{color:var(--t1)}
+
+/* 折叠面板 */
+.details{margin-top:8px;padding:10px 12px;background:var(--sf2);border:1px solid var(--bd);border-radius:var(--r2);font-size:.78rem;line-height:1.7}
+.details summary{cursor:pointer;font-weight:500;color:var(--t1);list-style:none;display:flex;align-items:center;gap:6px}
+.details summary::-webkit-details-marker{display:none}
+.details summary::after{content:'▼';font-size:.6rem;transition:transform .2s;color:var(--t3)}
+.details[open] summary::after{transform:rotate(180deg)}
+.details .content{margin-top:8px;color:var(--t2)}
+
+/* 上传区域 */
+.upload-area{position:relative;border:2px dashed var(--bd);border-radius:var(--r2);padding:10px 12px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg2);display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:50px;overflow:hidden}
+.upload-area:hover,.upload-area.dragover{border-color:var(--cy);background:var(--cy2)}
+.upload-area input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;display:block}
+.upload-area input[type="file"]::-webkit-file-upload-button{visibility:hidden;width:0}
+.upload-icon{font-size:1.1rem;margin-bottom:2px;color:var(--t3)}
+.upload-text{font-size:.76rem;color:var(--t2);margin-bottom:1px}
+.upload-hint{font-size:.66rem;color:var(--t3);line-height:1.45}
+.upload-preview{margin-top:12px;padding:10px;background:var(--sf2);border-radius:var(--r3);display:none;width:100%}
+.upload-preview.show{display:block}
+.preview-name{font-size:.8rem;color:var(--t1);margin-bottom:4px;word-break:break-all}
+.preview-meta{font-size:.7rem;color:var(--t3);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.preview-remove{color:var(--rd);cursor:pointer;font-size:.8rem;margin-left:auto;padding:2px 6px;border-radius:4px}
+.preview-remove:hover{background:var(--rd2)}
+
+/* 临时音频状态 */
+.temp-audio-status{margin-top:8px;padding:6px 10px;background:var(--gn2);border:1px solid var(--gn);border-radius:var(--r3);font-size:.75rem;color:var(--gn);display:none;align-items:center;gap:6px}
+.temp-audio-status.show{display:flex}
+
+/* 录音功能 */
+.recorder-box{margin-top:12px;padding:12px;background:var(--sf2);border-radius:var(--r2);border:1px solid var(--bd)}
+.recorder-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.recorder-title{font-size:.8rem;font-weight:500;color:var(--t1);display:flex;align-items:center;gap:6px}
+.recorder-controls{display:flex;gap:8px;align-items:center}
+.rec-btn{width:40px;height:40px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.2rem;transition:all .2s;background:var(--rd);color:white;flex-shrink:0}
+.rec-btn:hover{transform:scale(1.05)}
+.rec-btn.recording{background:var(--rd);animation:pulse 1s infinite}
+.rec-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.6)}50%{box-shadow:0 0 0 10px rgba(239,68,68,0)}}
+.rec-timer{font-family:var(--fm);font-size:.8rem;color:var(--t2);min-width:45px;text-align:center}
+.rec-status{font-size:.7rem;color:var(--t3)}
+.rec-status.recording{color:var(--rd)}
+.rec-preview{margin-top:10px;padding:10px;background:var(--bg2);border-radius:var(--r3);display:none}
+.rec-preview.show{display:block}
+.rec-preview audio{width:100%;margin-top:6px}
+.rec-actions{display:flex;gap:6px;margin-top:8px}
+.rec-actions button{flex:1;padding:6px 10px;font-size:.75rem;border-radius:var(--r3);border:1px solid var(--bd);background:var(--sf);color:var(--t2);cursor:pointer;transition:all .2s}
+.rec-actions button:hover{border-color:var(--cy);color:var(--cy)}
+.rec-actions .use{background:var(--gn);border-color:var(--gn);color:white}
+.rec-actions .use:hover{background:#16a34a}
+
+/* 波形可视化 */
+.waveform{height:40px;background:var(--sf3);border-radius:4px;margin:8px 0;overflow:hidden;position:relative}
+.waveform-bar{position:absolute;bottom:0;width:3px;background:var(--cy);border-radius:2px 2px 0 0;transition:height .05s}
+
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:3px}
+@media(max-width:960px){.guide-grid,.guide-steps,.batch-grid{grid-template-columns:1fr}.tab-link{margin-left:0}}
+@media(max-width:600px){.app{padding:18px 14px 60px}.hdr h1{font-size:1.8rem}.pnl-b{padding:15px}.grid{gap:14px}.tabs{padding:10px}.tab-btn{flex:1;justify-content:center}.action-row{flex-direction:column;align-items:stretch}.apply-btn{width:100%}}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<div class="app">
+  <header class="hdr">
+    <div class="hdr-t">
+      <div class="logo">V</div>
+      <div class="badge"><span class="dot"></span> VoxCPM 2</div>
+    </div>
+    <h1>语音合成<b>工作台</b></h1>
+    <p class="sub">OpenBMB VoxCPM2 · 官方最佳实践 · 多语种/方言/克隆/风格控制</p>
+  </header>
+
+  <div class="sbar">
+    <span class="sd on" id="sD"></span>
+    <span id="sT">直连 HuggingFace Space · openbmb/VoxCPM-Demo</span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="workbench">🛠 工作台</button>
+    <button class="tab-btn" data-tab="batch">🎬 批量对白</button>
+    <button class="tab-btn" data-tab="guide">📘 使用说明</button>
+    <a class="tab-link" href="https://huggingface.co/spaces/openbmb/VoxCPM-Demo" target="_blank" rel="noopener noreferrer">↗ 官方 Space</a>
+  </div>
+
+  <div class="page active" data-page="workbench">
+  <div class="grid">
+    <div>
+      <!-- 文本与风格面板 -->
+      <div class="pnl">
+        <div class="pnl-h"><span class="ic">✍️</span> 文本与控制指令</div>
+        <div class="pnl-b">
+          <details class="details" open>
+            <summary>📋 使用要点</summary>
+            <div class="content">
+              <div class="best-practice" style="margin-top:8px">
+                <strong>使用建议</strong><br>
+                • 先直接写清楚目标语言正文，确有需要时再补充控制项<br>
+                • 非语言标签点到为止，用来加气口、笑声或迟疑<br>
+                • 做 Voice Design 时，把身份、声音质感与表达场景揉进一条 Control Instruction<br>
+                • 做克隆时，先准备 <strong>5 秒以上</strong> 的干净参考音频，再逐步加入风格控制
+              </div>
+
+              <details class="details" style="margin-top:10px">
+                <summary>示例 1 — 林黛玉</summary>
+                <div class="content">
+                  <div class="guide-note">
+                    <span style="color:var(--cy)">Control Instruction:</span> <code>young Chinese maiden, teenage girl, clear, bright, slightly high-pitched voice, light, airy, crisp and delicate, soft and ethereal, not deep or heavy, slow gentle pacing, slightly cute, soft sweet tone</code><br>
+                    <span style="color:var(--mg)">Target Text:</span> <code>早知他来，我就不来了。今儿他来，明儿我来，若肯错开些，岂不天天有人来？也不至太热闹，也不至太冷清。谁知你倒偏要凑在一处……叫我这心里，越发不是滋味了。[sigh]</code>
+                  </div>
+                </div>
+              </details>
+
+              <details class="details" style="margin-top:10px">
+                <summary>示例 2 — 暴躁驾校教练</summary>
+                <div class="content">
+                  <div class="guide-note">
+                    <span style="color:var(--cy)">Control Instruction:</span> <code>暴躁的中年男声，语速快，充满无奈和愤怒</code><br>
+                    <span style="color:var(--mg)">Target Text:</span> <code>踩离合！踩刹车啊！你往哪儿开呢？前面是树你看不见吗？我教了你八百遍了，打死方向盘！你是不是想把车给我开到沟里去？</code>
+                  </div>
+                </div>
+              </details>
+
+              <details class="details" style="margin-top:10px">
+                <summary>🗣️ 方言生成指南（官方推荐）</summary>
+                <div class="content">
+                  <div style="margin-bottom:10px">
+                    <strong>📌 核心原则</strong><br>
+                    • 正文用<strong>地道方言书写</strong>，不要用普通话硬套<br>
+                    • Control Instruction 只需写方言名（如 <code>Cantonese</code>），不要加太多复杂描述
+                  </div>
+                  <table class="dialect-table">
+                    <thead>
+                      <tr><th>方言</th><th>地道示例（正文）</th><th>Control Instruction</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr><td>粤语</td><td><code>伙計，唔該一個A餐，凍奶茶少甜！</code></td><td><code>Cantonese</code></td></tr>
+                      <tr><td>四川话</td><td><code>幺儿，哈戳戳得你屋头来噶！</code></td><td><code>Sichuan dialect</code></td></tr>
+                      <tr><td>东北话</td><td><code>你搁这整啥玩意儿呢？</code></td><td><code>Northeastern dialect</code></td></tr>
+                      <tr><td>河南话</td><td><code>恁这是弄啥嘞？晌午吃啥饭？</code></td><td><code>Henan dialect</code></td></tr>
+                    </tbody>
+                  </table>
+                  <div class="tip" style="margin-top:8px;padding:8px;background:var(--sf3);border-radius:var(--r3);font-size:.72rem">
+                    🤖 <strong>小技巧</strong>：不会写方言？先用 AI 助手把普通话改写成地道方言，再粘贴到正文。
+                  </div>
+                </div>
+              </details>
+            </div>
+          </details>
+
+          <div class="ta-w">
+            <textarea class="ta" id="targetText" placeholder="输入要合成的文本内容（支持多语种/方言）...">早知他来，我就不来了。今儿他来，明儿我来，若肯错开些，岂不天天有人来？也不至太热闹，也不至太冷清。谁知你倒偏要凑在一处……叫我这心里，越发不是滋味了。[sigh]</textarea>
+            <span class="cn"><span id="charCount">0</span> 字</span>
+          </div>
+
+          <!-- 自定义控制指令 -->
+          <div class="sl">🎛️ Control Instruction（可选，可与克隆人物叠加）</div>
+          <div class="action-row" style="margin-bottom:10px">
+            <input type="text" class="ci" id="controlInstruction" value="young Chinese maiden, teenage girl, clear, bright, slightly high-pitched voice, light, airy, crisp and delicate, soft and ethereal, not deep or heavy, slow gentle pacing, slightly cute, soft sweet tone" placeholder='例："播音腔 字正腔圆"、"温柔女声 亲切自然"、"轻柔 空灵 少女感"' style="flex:1;margin-bottom:0">
+            <button class="apply-btn" id="applyCtrl">应用</button>
+          </div>
+
+          <!-- 风格预览 -->
+          <div class="sl">🎭 当前控制指令预览</div>
+          <div class="style-bar" id="stylePreview"><span style="color:var(--t3)">（默认，无额外风格修饰）</span></div>
+
+          <div class="sl">😊 发音风格（可多选组合）</div>
+          <div class="chips" id="emotionChips">
+            <div class="chip on" data-v="">默认</div>
+            <div class="chip" data-v="开心">😄 开心</div>
+            <div class="chip" data-v="悲伤">😢 悲伤</div>
+            <div class="chip" data-v="生气">😡 生气</div>
+            <div class="chip" data-v="温柔">🥰 温柔</div>
+            <div class="chip" data-v="严肃">🧐 严肃</div>
+            <div class="chip" data-v="慵懒">😴 慵懒</div>
+            <div class="chip" data-v="悄悄话">🤫 悄悄话</div>
+            <div class="chip" data-v="夹子音">🎀 夹子音</div>
+            <div class="chip" data-v="语速加快">⏩ 快速</div>
+            <div class="chip" data-v="语速变慢">⏪ 慢速</div>
+            <div class="chip" data-v="慷慨激昂">🔥 激昂</div>
+          </div>
+
+          <div class="sl">🎙️ 声音特征（可多选）</div>
+          <div class="chips" id="voiceTraitChips">
+            <div class="chip" data-v="男声">👦 男声</div>
+            <div class="chip" data-v="女声">👧 女声</div>
+            <div class="chip" data-v="儿童">🧒 儿童</div>
+            <div class="chip" data-v="少年">🧑 少年</div>
+            <div class="chip" data-v="中年">👨 中年</div>
+            <div class="chip" data-v="老年">👴 老年</div>
+            <div class="chip" data-v="温柔嗓音">🎵 温柔</div>
+            <div class="chip" data-v="粗犷嗓音">🪨 粗犷</div>
+            <div class="chip" data-v="沙哑嗓音">🌫️ 沙哑</div>
+            <div class="chip" data-v="清脆嗓音">🔔 清脆</div>
+            <div class="chip" data-v="低沉嗓音">🎻 低沉</div>
+            <div class="chip" data-v="甜美嗓音">🍬 甜美</div>
+            <div class="chip" data-v="磁性嗓音">🎙️ 磁性</div>
+          </div>
+
+          <!-- 快速风格预设（官方推荐格式） -->
+          <div class="sl">⚡ 快速风格预设（点击应用）</div>
+          <div class="ex-row">
+            <div class="ex-chip" data-ctrl="中年男人 粗犷嗓音">🧔 中年男人 粗犷嗓音</div>
+            <div class="ex-chip" data-ctrl="刚睡醒 迷迷糊糊">😴 刚睡醒 迷迷糊糊</div>
+            <div class="ex-chip" data-ctrl="播音腔 字正腔圆">📻 播音腔 字正腔圆</div>
+            <div class="ex-chip" data-ctrl="小萝莉 可爱声线">🧸 小萝莉 可爱声线</div>
+            <div class="ex-chip" data-ctrl="老年女性 慈祥">👵 老年女性 慈祥</div>
+            <div class="ex-chip" data-ctrl="热血少年 中二">🔥 热血少年 中二</div>
+            <div class="ex-chip" data-ctrl="磁性嗓音 霸道总裁">🎙️ 磁性嗓音 霸道总裁</div>
+            <div class="ex-chip" data-ctrl="甜美少女 撒娇">🍓 甜美少女 撒娇</div>
+            <div class="ex-chip" data-ctrl="温柔女声 亲切自然">🌸 温柔女声 亲切自然</div>
+            <div class="ex-chip" data-ctrl="新闻主播 稳重清晰">📰 新闻主播 稳重清晰</div>
+            <div class="ex-chip" data-ctrl="历史旁白 低沉缓慢 沧桑">📜 历史旁白 低沉缓慢 沧桑</div>
+            <div class="ex-chip" data-ctrl="客服小姐姐 甜美耐心">🎧 客服小姐姐 甜美耐心</div>
+            <div class="ex-chip" data-ctrl="老师讲课 清楚耐心">📚 老师讲课 清楚耐心</div>
+            <div class="ex-chip" data-ctrl="电台主持 轻松聊天感">📻 电台主持 轻松聊天感</div>
+            <div class="ex-chip" data-ctrl="动漫少年 活泼夸张">🎈 动漫少年 活泼夸张</div>
+            <div class="ex-chip" data-ctrl="冷艳御姐 高冷克制">❄️ 冷艳御姐 高冷克制</div>
+          </div>
+
+          <!-- ✅ 官方非语言标签提示 -->
+          <div class="tag-tip">
+            💡 <strong>让语音更自然</strong>：在目标文本中加入 <strong>英文方括号标签</strong>，如 <code>[laughing]</code> 或 <code>[sigh]</code>。<br>
+            <span class="warn">⚠️ 建议只用推荐英文标签，中文也可，控制数量，避免一句话叠太多</span>
+          </div>
+
+          <!-- ✅ 音频标签插入（官方推荐格式） -->
+          <div class="sl">🔊 插入非语言标签（点击插入光标处）</div>
+          <div class="snd">
+            <button class="sb" data-t="[laughing]">😆 笑声 <span class="tag">[laughing]</span></button>
+            <button class="sb" data-t="[sigh]">😮‍💨 叹息 <span class="tag">[sigh]</span></button>
+            <button class="sb" data-t="[Uhm]">🤔 犹豫 <span class="tag">[Uhm]</span></button>
+            <button class="sb" data-t="[Shh]">🤫 嘘声 <span class="tag">[Shh]</span></button>
+            <button class="sb" data-t="[Question-ah]">❓ 疑问-啊 <span class="tag">[Question-ah]</span></button>
+            <button class="sb" data-t="[Question-ei]">❓ 疑问-诶 <span class="tag">[Question-ei]</span></button>
+            <button class="sb" data-t="[Question-en]">❓ 疑问-嗯 <span class="tag">[Question-en]</span></button>
+            <button class="sb" data-t="[Question-oh]">❓ 疑问-哦 <span class="tag">[Question-oh]</span></button>
+            <button class="sb" data-t="[Surprise-wa]">😲 惊讶-哇 <span class="tag">[Surprise-wa]</span></button>
+            <button class="sb" data-t="[Surprise-yo]">😲 惊讶-哟 <span class="tag">[Surprise-yo]</span></button>
+            <button class="sb" data-t="[Dissatisfaction-hnn]">😒 不满-哼 <span class="tag">[Dissatisfaction-hnn]</span></button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 结果区域 -->
+      <div class="ra" id="resultArea">
+        <div class="rc">
+          <div class="rh">
+            <span class="rt">✓ 合成完成</span>
+            <a class="dl" id="downloadBtn" href="#" download="voxcpm.wav">⬇ 下载 WAV</a>
+          </div>
+          <div class="pl">
+            <button class="pb" id="playBtn">▶</button>
+            <div class="pw">
+              <div class="pbr" id="progressBar"><div class="pf" id="progressFill"></div></div>
+              <div class="td"><span id="currentTime">0:00</span><span id="totalTime">0:00</span></div>
+            </div>
+          </div>
+          <audio id="audioPlayer" style="display:none"></audio>
+          <div class="ui" id="audioInfo" style="display:none">
+            <span>采样率 <b class="uv" id="sampleRate">44100</b>Hz</span>
+            <span>时长 <b class="uv" id="duration">-</b>s</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 日志与历史 -->
+      <div class="la" id="logArea"><div class="sl" style="margin-top:6px">📋 请求日志</div><div class="lb" id="logBox"></div></div>
+      <div class="hs" id="historyArea">
+        <div class="history-toolbar">
+          <div class="sl" style="margin:0">🕐 历史记录</div>
+          <div class="history-actions">
+            <label class="history-check"><input type="checkbox" id="historySelectAll"> 全选</label>
+            <button class="history-mini" id="historyDownloadBtn" disabled>下载选中</button>
+            <button class="history-mini danger" id="historyDeleteBtn" disabled>删除选中</button>
+          </div>
+        </div>
+        <div class="hl" id="historyList"></div>
+      </div>
+    </div>
+
+    <!-- 右侧面板 -->
+    <div>
+      <!-- 人物声音管理 -->
+      <div class="pnl" style="margin-bottom:18px">
+        <div class="pnl-h"><span class="ic">🔑</span> 人物声音库</div>
+        <div class="pnl-b">
+          <!-- 注册新人物 -->
+          <div style="margin-bottom:14px;padding:12px;background:var(--sf2);border-radius:var(--r2)">
+            <div style="display:flex;gap:8px;margin-bottom:10px">
+              <input type="text" class="ci" id="voiceName" placeholder="📛 人物名称（例：暴躁司机老王）" style="flex:1;margin-bottom:0">
+            </div>
+            
+            <!-- 文件上传 -->
+            <div class="sl">🎵 参考音频（官方建议 ≥5 秒）</div>
+            <label class="upload-area" id="uploadArea">
+              <input type="file" id="refAudio" accept="audio/*">
+              <div class="upload-icon">📁</div>
+              <div class="upload-text">点击或拖拽上传音频文件</div>
+              <div class="upload-hint">支持 WAV/MP3/M4A/FLAC · 建议 5-10 秒 · ≤10MB · 干净人声效果最佳</div>
+            </label>
+            <div class="upload-preview" id="uploadPreview">
+              <div class="preview-name" id="previewName"></div>
+              <div class="preview-meta">
+                <span id="previewSize"></span>
+                <span id="previewDuration"></span>
+                <span class="preview-remove" id="previewRemove">✕ 移除</span>
+              </div>
+            </div>
+            <div class="temp-audio-status" id="tempAudioStatus">
+              <span>✅</span>
+              <span id="tempAudioText">临时音频已就绪，可直接生成</span>
+            </div>
+
+            <!-- 录音功能 -->
+            <div class="recorder-box">
+              <div class="recorder-header">
+                <span class="recorder-title">🎤 或直接录制（建议 5-10 秒）</span>
+                <div class="recorder-controls">
+                  <span class="rec-timer" id="recTimer">00:00</span>
+                  <button class="rec-btn" id="recBtn" title="开始/停止录音">🔴</button>
+                </div>
+              </div>
+              <div class="rec-status" id="recStatus">点击 🔴 开始录音，安静环境效果更佳</div>
+              <div class="waveform" id="waveform"></div>
+              <div class="rec-preview" id="recPreview">
+                <div style="font-size:.75rem;color:var(--t2);margin-bottom:4px">🎧 录音预览</div>
+                <audio id="recAudio" controls style="width:100%"></audio>
+                <div class="rec-actions">
+                  <button id="recRetake">🔄 重录</button>
+                  <button id="recUse" class="use">✅ 使用此录音</button>
+                </div>
+              </div>
+            </div>
+
+            <button id="registerBtn" style="width:100%;margin-top:12px;padding:10px;background:var(--gn);border:none;border-radius:var(--r2);color:white;font-weight:500;cursor:pointer;font-size:.9rem">✨ 注册人物（保存入库）</button>
+          </div>
+
+          <!-- 人物列表 -->
+          <div class="voice-toolbar">
+            <div class="sl" style="margin:0">已注册人物</div>
+            <button class="ghost-btn" id="clearVoiceBtn" disabled>取消人物选择</button>
+          </div>
+          <div class="voice-status" id="voiceStatus">当前未选择人物，可直接使用预设或临时音频。</div>
+          <div id="voiceList" class="voice-list">
+            <div style="color:var(--t3);font-size:.76rem">暂无注册人物，上传或录音开始注册 👆</div>
+          </div>
+
+          <details class="details">
+            <summary>🔍 如何使用人物声音？</summary>
+            <div class="content">
+              <strong>📋 克隆最佳实践</strong><br>
+              1️⃣ 准备 <strong>≥5 秒</strong> 干净参考音频（无背景噪音）<br>
+              2️⃣ 填写人物名称 → 点击"注册人物"保存到本地<br>
+              3️⃣ 下次点击人物卡片 → 自动加载音色 → 可叠加风格控制<br>
+              4️⃣ 🔊 点击播放按钮可试听参考音频<br>
+              <br>
+              <span class="warn">⚠️ 克隆不能任意改变说话人身份，更适合在原始音色基础上调整情绪/语速</span>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <!-- 参数设置 -->
+      <div class="pnl">
+        <div class="pnl-h"><span class="ic">⚙️</span> 合成参数</div>
+        <div class="pnl-b">
+          <div class="cg">
+            <div class="cl">CFG 系数 <span class="v" id="cfgValue">2.0</span></div>
+            <input type="range" id="cfgSlider" min="0.5" max="3.0" step="0.1" value="2.0">
+            <div style="font-size:.7rem;color:var(--t3);margin-top:4px">官方推荐 1.5~2.5 · 越高越贴合参考音频</div>
+          </div>
+          <div class="sep"></div>
+          <div class="cg">
+            <label style="display:flex;align-items:center;gap:7px;font-size:.78rem;color:var(--t2);cursor:pointer">
+              <input type="checkbox" id="doNormalize" checked> 🔤 文本正则化（自动规范数字/标点）
+            </label>
+          </div>
+          <div class="cg">
+            <label style="display:flex;align-items:center;gap:7px;font-size:.78rem;color:var(--t2);cursor:pointer">
+              <input type="checkbox" id="denoise" checked> 🔇 参考音频降噪（提升克隆质量）
+            </label>
+          </div>
+          <div class="sep"></div>
+          <div class="sl">📡 生成说明（本次请求）</div>
+          <div class="preview-box" id="requestPreview"></div>
+          <button class="gbtn" id="generateBtn"><span class="sp"></span><span class="bt">🚀 开始生成</span></button>
+          <div style="margin-top:9px;font-family:var(--fm);font-size:.63rem;color:var(--t3);text-align:center">支持“参考音频 + 控制指令”联合使用 · Ctrl+Enter 快速合成</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <div class="page" data-page="batch">
+    <div class="batch-page">
+      <section class="batch-hero">
+        <h2>批量对白生成</h2>
+        <p>把多角色台词按固定格式粘进来，系统会自动按“角色名”匹配你前面保存的人物声音，逐条生成，并支持多选后一键下载。</p>
+      </section>
+
+      <div class="batch-grid">
+        <div class="batch-box">
+          <h3>对白脚本</h3>
+          <textarea class="batch-textarea" id="batchScript" placeholder="格式：&#10;（1）角色：台词[标签]&#10;（2）角色：台词[标签]">（1）陆判：朱尔旦，你想不想改命？[阴森神秘]
+（2）朱尔旦：你……是庙里的神，还是来索命的鬼？[醉意朦胧中带警惕]
+（3）陆判：本官陆判，掌人生死，也判人心。你命薄，心也钝。要不要，本官替你改一改？[威严冷峻]
+（4）朱妻：从前你看我，是怜，是忍。如今你看我，倒比从前更像陌生人。[愧疚与审视]
+（5）陆判：人间最难判的，从来不是生死，是欲心。[复杂难言]</textarea>
+          <div class="batch-tip">支持格式：<code>（序号）角色：台词[标签]</code>。如果方括号内是中文，会自动作为控制指令；如果是像 <code>[laughing]</code> 这样的英文标签，会自动插回台词正文。</div>
+          <div class="batch-actions">
+            <button class="batch-btn secondary" id="parseBatchBtn">解析脚本</button>
+            <button class="batch-btn" id="generateBatchBtn">批量生成</button>
+            <button class="batch-btn secondary" id="refreshBatchBtn">刷新队列</button>
+          </div>
+          <div class="batch-status" id="batchStatus">先点击“解析脚本”，系统会先帮你检查角色匹配情况。</div>
+        </div>
+
+        <div class="batch-box">
+          <div class="batch-toolbar">
+            <h3 style="margin-bottom:0">生成队列</h3>
+            <label><input type="checkbox" id="batchSelectAll"> 全选已生成</label>
+          </div>
+          <div class="batch-actions" style="margin-top:0;margin-bottom:12px">
+            <button class="batch-btn success" id="downloadBatchBtn" disabled>下载选中</button>
+          </div>
+          <div class="batch-list" id="batchList">
+            <div style="color:var(--t3);font-size:.78rem">解析后会在这里显示每条对白的匹配结果与生成状态。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page" data-page="guide">
+    <div class="guide-page">
+      <section class="guide-hero">
+        <h2>VoxCPM 2 使用说明</h2>
+        <p>本页根据官方 <strong>VoxCPM 2 最佳实践</strong>整理，重点把“怎么写文本、怎么写控制指令、什么时候该用参考音频”翻译成更好上手的中文说明，方便你直接边看边试。</p>
+        <div class="guide-link-row">
+          <a class="guide-link" href="https://voxcpm.readthedocs.io/zh-cn/latest/cookbook.html" target="_blank" rel="noopener noreferrer">📘 官方最佳实践原文</a>
+          <a class="guide-link" href="https://voxcpm.readthedocs.io/zh-cn/latest/usage_guide.html" target="_blank" rel="noopener noreferrer">🧩 使用指南与参数</a>
+        </div>
+      </section>
+
+      <section class="guide-steps">
+        <article class="step-card">
+          <div class="k">01</div>
+          <h4>先写目标语言正文</h4>
+          <p>大多数情况下，先直接输入你真正想说的话，不必一开始就加很多标签或语言说明。</p>
+        </article>
+        <article class="step-card">
+          <div class="k">02</div>
+          <h4>再补风格或参考音频</h4>
+          <p>如果需要固定音色就上传参考音频；如果只是想生成某种人物感和语气，就写 Control Instruction。</p>
+        </article>
+        <article class="step-card">
+          <div class="k">03</div>
+          <h4>多试几次微调</h4>
+          <p>官方文档强调模型带有一定随机性，同一组文本和提示词，每次生成都可能有细微差异。</p>
+        </article>
+      </section>
+
+      <div class="guide-grid">
+        <article class="guide-card">
+          <h3>生成说明（中文翻译版）</h3>
+          <p>没有参考音频时，也可以直接靠文字描述生成声音。官方建议把身份、声音质感、情绪和场景合并进一条完整的 Control Instruction。</p>
+          <ul>
+            <li>身份设定：例如“中年男播音员”“年长女性”“卡通男孩”。</li>
+            <li>声音质感：例如“低沉”“沙哑”“有磁性”“颗粒感”。</li>
+            <li>表达状态：例如“热情”“缓慢叙述”“新闻播报”“历史旁白”。</li>
+            <li>中英文都可以，但尽量写成一条完整、清晰、少冲突的描述。</li>
+          </ul>
+          <div class="guide-note">示例：热情洋溢的中年男性播音员，声音较低沉，富有磁性，带着逐渐密集的节奏感呼喊宣讲话语。</div>
+        </article>
+
+        <article class="guide-card">
+          <h3>声音克隆说明</h3>
+          <p>如果你想复现某个具体音色，可以上传或录制参考音频。VoxCPM 2 会提取其中的音色特征再进行合成。</p>
+          <ul>
+            <li>建议至少准备 5 秒以上、干净稳定、噪音少的人声片段。</li>
+            <li>克隆更适合保留原始音色，再去调情绪、语速、说话方式。</li>
+            <li>不要指望只靠克隆就把说话人的身份完全改成另一个人。</li>
+            <li>如果参考音频过短、过吵、混响重，效果通常会明显下降。</li>
+          </ul>
+        </article>
+
+        <article class="guide-card">
+          <h3>多语种与方言</h3>
+          <p>官方建议是：正文直接使用目标语言。方言场景里，正文最好写成真实、地道的方言说法，而不是普通话硬翻。</p>
+          <ul>
+            <li>普通多语种输入通常不需要额外加语言标签。</li>
+            <li>方言时，Control Instruction 可以只写方言名，例如 <code>Cantonese</code>。</li>
+            <li>如果不会写方言，可以先让 AI 帮你把普通话改成更自然的当地表达。</li>
+          </ul>
+          <div class="guide-note">例子：粤语正文写“伙計，唔該一個A餐，凍奶茶少甜！”，控制项只写 <code>Cantonese</code>，往往比“普通话正文 + 很多复杂说明”更自然。</div>
+        </article>
+
+        <article class="guide-card">
+          <h3>非语言标签怎么用</h3>
+          <p>为了让语音不那么机械，可以在正文里直接插入英文方括号标签。官方更推荐使用稳定、简单、数量少的标签。</p>
+          <ul>
+            <li>笑与叹息：<code>[laughing]</code>、<code>[sigh]</code></li>
+            <li>停顿与思考：<code>[Uhm]</code>、<code>[Shh]</code></li>
+            <li>疑问语气：<code>[Question-ah]</code>、<code>[Question-ei]</code></li>
+            <li>不要在一句话里叠太多标签，否则容易影响稳定性。</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tt" id="toast"></div>
+<div class="modal" id="modal" aria-hidden="true">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head">
+      <div class="modal-kicker" id="modalKicker">提示</div>
+      <div class="modal-title" id="modalTitle">消息</div>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-actions" id="modalActions"></div>
+  </div>
+</div>
+
+<script type="module">
+import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/+esm";
+
+const $ = id => document.getElementById(id);
+const S = { 
+  voices: [], selectedVoice: null, client: null, generatedBlob: null, history: [],
+  mediaRecorder: null, audioChunks: [], isRecording: false, recordedBlob: null,
+  uploadedFile: null, hasTempAudio: false, playingVoice: null,
+  batchItems: [], batchGenerating: false
+};
+
+const els = {
+  tabButtons: Array.from(document.querySelectorAll('.tab-btn')),
+  pages: Array.from(document.querySelectorAll('.page')),
+  targetText: $('targetText'), charCount: $('charCount'),
+  emotionChips: $('emotionChips'), voiceTraitChips: $('voiceTraitChips'),
+  controlInstruction: $('controlInstruction'), stylePreview: $('stylePreview'),
+  voiceName: $('voiceName'), uploadArea: $('uploadArea'), refAudio: $('refAudio'),
+  uploadPreview: $('uploadPreview'), previewName: $('previewName'),
+  previewSize: $('previewSize'), previewDuration: $('previewDuration'), previewRemove: $('previewRemove'),
+  tempAudioStatus: $('tempAudioStatus'), tempAudioText: $('tempAudioText'),
+  recBtn: $('recBtn'), recTimer: $('recTimer'), recStatus: $('recStatus'),
+  waveform: $('waveform'), recPreview: $('recPreview'), recAudio: $('recAudio'),
+  recRetake: $('recRetake'), recUse: $('recUse'),
+  voiceList: $('voiceList'), registerBtn: $('registerBtn'),
+  clearVoiceBtn: $('clearVoiceBtn'), voiceStatus: $('voiceStatus'),
+  batchScript: $('batchScript'), parseBatchBtn: $('parseBatchBtn'),
+  generateBatchBtn: $('generateBatchBtn'), batchStatus: $('batchStatus'),
+  refreshBatchBtn: $('refreshBatchBtn'),
+  batchList: $('batchList'), batchSelectAll: $('batchSelectAll'),
+  downloadBatchBtn: $('downloadBatchBtn'),
+  cfgSlider: $('cfgSlider'), cfgValue: $('cfgValue'),
+  doNormalize: $('doNormalize'), denoise: $('denoise'),
+  generateBtn: $('generateBtn'), applyCtrl: $('applyCtrl'),
+  resultArea: $('resultArea'), audioPlayer: $('audioPlayer'),
+  playBtn: $('playBtn'), progressBar: $('progressBar'), progressFill: $('progressFill'),
+  currentTime: $('currentTime'), totalTime: $('totalTime'),
+  downloadBtn: $('downloadBtn'), audioInfo: $('audioInfo'),
+  sampleRate: $('sampleRate'), duration: $('duration'),
+  logArea: $('logArea'), logBox: $('logBox'),
+  historyArea: $('historyArea'), historyList: $('historyList'),
+  historySelectAll: $('historySelectAll'),
+  historyDownloadBtn: $('historyDownloadBtn'),
+  historyDeleteBtn: $('historyDeleteBtn'),
+  toast: $('toast'), requestPreview: $('requestPreview'),
+  modal: $('modal'), modalKicker: $('modalKicker'),
+  modalTitle: $('modalTitle'), modalBody: $('modalBody'),
+  modalActions: $('modalActions')
+};
+
+// IndexedDB 工具
+const DB = 'VoxCPM_Voices', STORE = 'voices';
+const idb = {
+  async open() {
+    return new Promise((res, rej) => {
+      const req = indexedDB.open(DB, 1);
+      req.onupgradeneeded = e => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: 'key' });
+      };
+      req.onsuccess = () => res(req.result);
+      req.onerror = () => rej(req.error);
+    });
+  },
+  async put(voice) {
+    const conn = await this.open();
+    return new Promise((res, rej) => {
+      const tx = conn.transaction(STORE, 'readwrite');
+      const req = tx.objectStore(STORE).put(voice);
+      req.onsuccess = () => res(req.result);
+      req.onerror = () => rej(req.error);
+    });
+  },
+  async getAll() {
+    const conn = await this.open();
+    return new Promise((res, rej) => {
+      const tx = conn.transaction(STORE, 'readonly');
+      const req = tx.objectStore(STORE).getAll();
+      req.onsuccess = () => res(req.result);
+      req.onerror = () => rej(req.error);
+    });
+  },
+  async delete(key) {
+    const conn = await this.open();
+    return new Promise((res, rej) => {
+      const tx = conn.transaction(STORE, 'readwrite');
+      const req = tx.objectStore(STORE).delete(key);
+      req.onsuccess = () => res();
+      req.onerror = () => rej(req.error);
+    });
+  }
+};
+
+let modalResolver = null;
+
+// 工具函数
+function toast(msg, type = '') {
+  els.toast.textContent = msg;
+  els.toast.className = 'tt show ' + type;
+  setTimeout(() => els.toast.className = 'tt', 4000);
+}
+function closeModal(result = false) {
+  els.modal.classList.remove('show');
+  els.modal.setAttribute('aria-hidden', 'true');
+  els.modalActions.innerHTML = '';
+  if (modalResolver) {
+    modalResolver(result);
+    modalResolver = null;
+  }
+}
+function openModal({
+  kicker = '提示',
+  title = '消息',
+  body = '',
+  highlight = '',
+  actions = [{ label: '知道了', style: 'primary', value: true }]
+}) {
+  return new Promise(resolve => {
+    modalResolver = resolve;
+    els.modalKicker.textContent = kicker;
+    els.modalTitle.textContent = title;
+    els.modalBody.innerHTML = `${body}${highlight ? `<div class="modal-highlight">${highlight}</div>` : ''}`;
+    els.modalActions.innerHTML = actions.map((action, idx) => `
+      <button class="modal-btn ${action.style || 'secondary'}" data-modal-idx="${idx}">${escapeHtml(action.label)}</button>
+    `).join('');
+    els.modalActions.querySelectorAll('[data-modal-idx]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const action = actions[+btn.dataset.modalIdx];
+        closeModal(action?.value ?? false);
+      });
+    });
+    els.modal.classList.add('show');
+    els.modal.setAttribute('aria-hidden', 'false');
+  });
+}
+els.modal.addEventListener('click', e => {
+  if (e.target === els.modal) closeModal(false);
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && els.modal.classList.contains('show')) closeModal(false);
+});
+function log(msg, type = '') {
+  els.logArea.classList.add('vis');
+  const d = document.createElement('div');
+  d.className = 'l ' + type;
+  d.textContent = `[${new Date().toLocaleTimeString('zh-CN')}] ${msg}`;
+  els.logBox.appendChild(d);
+  els.logBox.scrollTop = els.logBox.scrollHeight;
+}
+function fmt(s) {
+  if (isNaN(s)) return '0:00';
+  return `${Math.floor(s/60)}:${Math.floor(s%60).toString().padStart(2,'0')}`;
+}
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/1024/1024).toFixed(1) + ' MB';
+}
+function escapeHtml(s) {
+  return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function highlightJson(value) {
+  const json = JSON.stringify(value, null, 2);
+  return escapeHtml(json).replace(
+    /("(?:\\u[\da-fA-F]{4}|\\[^u]|[^\\"])*")(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?/g,
+    match => {
+      if (match.startsWith('"')) {
+        return /:$/.test(match) ? `<span class="json-key">${match}</span>` : `<span class="json-string">${match}</span>`;
+      }
+      if (match === 'true' || match === 'false') return `<span class="json-boolean">${match}</span>`;
+      if (match === 'null') return `<span class="json-null">${match}</span>`;
+      return `<span class="json-number">${match}</span>`;
+    }
+  );
+}
+function formatCurlValue(value) {
+  if (value === null) return '<span class="curl-null">null</span>';
+  if (typeof value === 'boolean') return `<span class="curl-bool">${value}</span>`;
+  if (typeof value === 'number') return `<span class="curl-num">${value}</span>`;
+  return `<span class="curl-str">"${escapeHtml(String(value))}"</span>`;
+}
+function getReferencePreviewLabel() {
+  if (S.selectedVoice) return '<span class="curl-str">"&lt;saved_voice:' + escapeHtml(S.selectedVoice.name) + '&gt;"</span>';
+  if (S.recordedBlob) return '<span class="curl-str">"&lt;recorded_wav_file&gt;"</span>';
+  if (S.uploadedFile) return '<span class="curl-str">"&lt;uploaded_audio_file:' + escapeHtml(S.uploadedFile.name || 'audio') + '&gt;"</span>';
+  return '<span class="curl-null">null</span>';
+}
+function buildCurlPreview() {
+  const endpoint = '/gradio_api/call/generate';
+  const mode = S.selectedVoice ? 'saved_voice' : (S.hasTempAudio ? 'temp_reference' : 'text_only');
+  const lines = [
+    '<span class="curl-cmd">curl</span> <span class="curl-flag">-X</span> POST <span class="curl-str">"' + endpoint + '"</span> \\',
+    '  <span class="curl-flag">-H</span> <span class="curl-str">"Content-Type: application/json"</span> \\',
+    '  <span class="curl-flag">-d</span> \'{',
+    '    <span class="json-key">"mode"</span>: ' + formatCurlValue(mode) + ',',
+    '    <span class="json-key">"data"</span>: {',
+    '      <span class="json-key">"text_input"</span>: ' + formatCurlValue(els.targetText.value) + ',',
+    '      <span class="json-key">"control_instruction"</span>: ' + formatCurlValue(els.controlInstruction.value.trim()) + ',',
+    '      <span class="json-key">"reference_wav_path_input"</span>: ' + getReferencePreviewLabel() + ',',
+    '      <span class="json-key">"use_prompt_text"</span>: <span class="curl-bool">false</span>,',
+    '      <span class="json-key">"prompt_text_input"</span>: <span class="curl-str">""</span>,',
+    '      <span class="json-key">"cfg_value_input"</span>: ' + formatCurlValue(parseFloat(els.cfgSlider.value)) + ',',
+    '      <span class="json-key">"do_normalize"</span>: ' + formatCurlValue(!!els.doNormalize.checked) + ',',
+    '      <span class="json-key">"denoise"</span>: ' + formatCurlValue(!!els.denoise.checked),
+    '    }',
+    '  }\''
+  ];
+  return lines.join('\n');
+}
+async function computeHash(fileOrBlob) {
+  const str = `${fileOrBlob.name || 'recorded'}_${fileOrBlob.size}_${fileOrBlob.lastModified || Date.now()}`;
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = ((h << 5) - h) + str.charCodeAt(i);
+  return Math.abs(h).toString(16).padStart(8, '0');
+}
+function makeKey(name, hash) {
+  const safe = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+  return `voice_${safe}_${hash}`;
+}
+function toAudioFile(blob, fallbackName = `recorded_${Date.now()}.webm`) {
+  if (!blob) return null;
+  if (blob instanceof File) return blob;
+  return new File([blob], fallbackName, {
+    type: blob.type || 'audio/webm',
+    lastModified: Date.now()
+  });
+}
+function audioBufferToWavBlob(audioBuffer) {
+  const numChannels = audioBuffer.numberOfChannels;
+  const sampleRate = audioBuffer.sampleRate;
+  const format = 1;
+  const bitDepth = 16;
+  const bytesPerSample = bitDepth / 8;
+  const blockAlign = numChannels * bytesPerSample;
+  const dataLength = audioBuffer.length * blockAlign;
+  const buffer = new ArrayBuffer(44 + dataLength);
+  const view = new DataView(buffer);
+  let offset = 0;
+
+  const writeString = str => {
+    for (let i = 0; i < str.length; i++) view.setUint8(offset++, str.charCodeAt(i));
+  };
+
+  writeString('RIFF');
+  view.setUint32(offset, 36 + dataLength, true); offset += 4;
+  writeString('WAVE');
+  writeString('fmt ');
+  view.setUint32(offset, 16, true); offset += 4;
+  view.setUint16(offset, format, true); offset += 2;
+  view.setUint16(offset, numChannels, true); offset += 2;
+  view.setUint32(offset, sampleRate, true); offset += 4;
+  view.setUint32(offset, sampleRate * blockAlign, true); offset += 4;
+  view.setUint16(offset, blockAlign, true); offset += 2;
+  view.setUint16(offset, bitDepth, true); offset += 2;
+  writeString('data');
+  view.setUint32(offset, dataLength, true); offset += 4;
+
+  const channels = Array.from({ length: numChannels }, (_, i) => audioBuffer.getChannelData(i));
+  for (let i = 0; i < audioBuffer.length; i++) {
+    for (let ch = 0; ch < numChannels; ch++) {
+      const sample = Math.max(-1, Math.min(1, channels[ch][i]));
+      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+      offset += 2;
+    }
+  }
+  return new Blob([buffer], { type: 'audio/wav' });
+}
+async function convertBlobToWavFile(blob, fallbackName = `recorded_${Date.now()}.wav`) {
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  try {
+    const arrayBuffer = await blob.arrayBuffer();
+    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
+    const wavBlob = audioBufferToWavBlob(audioBuffer);
+    return new File([wavBlob], fallbackName, {
+      type: 'audio/wav',
+      lastModified: Date.now()
+    });
+  } finally {
+    if (audioCtx.state !== 'closed') await audioCtx.close();
+  }
+}
+function clearVoiceSelection() {
+  if (S.selectedVoice) {
+    S.selectedVoice = null;
+    updateVoiceStatus();
+    updatePreview();
+    renderVoices();
+    log('🔓 已取消人物选择，切换为风格控制模式', 'nf');
+    toast('🔓 已取消人物选择', 'ok');
+  }
+}
+function switchTab(tab) {
+  els.tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+  els.pages.forEach(page => page.classList.toggle('active', page.dataset.page === tab));
+}
+els.tabButtons.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+function updateTempAudioStatus() {
+  if (S.recordedBlob || S.uploadedFile) {
+    S.hasTempAudio = true;
+    els.tempAudioStatus.classList.add('show');
+    els.tempAudioText.textContent = S.recordedBlob ? '🎤 临时录音已就绪，可直接生成' : '📁 临时文件已就绪，可直接生成';
+  } else {
+    S.hasTempAudio = false;
+    els.tempAudioStatus.classList.remove('show');
+  }
+}
+function updateVoiceStatus() {
+  if (S.selectedVoice) {
+    els.voiceStatus.textContent = `当前已选择人物：${S.selectedVoice.name}。如只想使用预设或临时音频，可点击右侧取消。`;
+    els.clearVoiceBtn.disabled = false;
+  } else {
+    els.voiceStatus.textContent = '当前未选择人物，可直接使用预设或临时音频。';
+    els.clearVoiceBtn.disabled = true;
+  }
+}
+els.clearVoiceBtn.addEventListener('click', clearVoiceSelection);
+function getSelectedChipValues(container) {
+  if (!container) return [];
+  return Array.from(container.querySelectorAll('.chip.on'))
+    .map(chip => chip.dataset.v || '')
+    .filter(Boolean);
+}
+function getAllSelectedTags() {
+  return [
+    ...getSelectedChipValues(els.emotionChips),
+    ...getSelectedChipValues(els.voiceTraitChips)
+  ];
+}
+function buildControlFromChips() {
+  return getAllSelectedTags().join(' ');
+}
+function syncControlInputFromChips({ appendExisting = false } = {}) {
+  const chipText = buildControlFromChips();
+  const manualText = appendExisting ? els.controlInstruction.value.trim() : '';
+  els.controlInstruction.value = [chipText, manualText].filter(Boolean).join(' ').trim();
+}
+function setChipSelection(container, values = [], { single = false } = {}) {
+  if (!container) return;
+  const normalized = values.filter(Boolean);
+  const chips = Array.from(container.querySelectorAll('.chip'));
+  chips.forEach(chip => chip.classList.remove('on'));
+  if (!normalized.length) {
+    container.querySelector('.chip[data-v=""]')?.classList.add('on');
+    return;
+  }
+  normalized.forEach(value => {
+    const chip = chips.find(x => x.dataset.v === value);
+    if (chip) chip.classList.add('on');
+  });
+  if (single) {
+    if (!container.querySelector('.chip.on')) container.querySelector('.chip[data-v=""]')?.classList.add('on');
+  } else if (!container.querySelector('.chip.on[data-v]')) {
+    container.querySelector('.chip[data-v=""]')?.classList.add('on');
+  }
+}
+function applyPresetToChips(text) {
+  const mappings = {
+    '中年男人 粗犷嗓音': { emotion: [], traits: ['中年', '男声', '粗犷嗓音'] },
+    '刚睡醒 迷迷糊糊': { emotion: ['慵懒'], traits: [] },
+    '播音腔 字正腔圆': { emotion: ['严肃'], traits: ['清脆嗓音'] },
+    '小萝莉 可爱声线': { emotion: ['开心'], traits: ['女声', '儿童', '甜美嗓音'] },
+    '老年女性 慈祥': { emotion: ['温柔'], traits: ['女声', '老年'] },
+    '热血少年 中二': { emotion: ['慷慨激昂'], traits: ['少年'] },
+    '磁性嗓音 霸道总裁': { emotion: ['严肃'], traits: ['男声', '中年', '磁性嗓音', '低沉嗓音'] },
+    '甜美少女 撒娇': { emotion: ['温柔', '夹子音'], traits: ['女声', '少年', '甜美嗓音'] },
+    '温柔女声 亲切自然': { emotion: ['温柔'], traits: ['女声', '温柔嗓音'] },
+    '新闻主播 稳重清晰': { emotion: ['严肃'], traits: ['清脆嗓音'] },
+    '历史旁白 低沉缓慢 沧桑': { emotion: ['严肃', '语速变慢'], traits: ['低沉嗓音', '老年'] },
+    '客服小姐姐 甜美耐心': { emotion: ['温柔'], traits: ['女声', '甜美嗓音'] },
+    '老师讲课 清楚耐心': { emotion: ['温柔'], traits: ['清脆嗓音'] },
+    '电台主持 轻松聊天感': { emotion: ['开心'], traits: ['磁性嗓音'] },
+    '动漫少年 活泼夸张': { emotion: ['开心'], traits: ['少年'] },
+    '冷艳御姐 高冷克制': { emotion: ['严肃'], traits: ['女声', '低沉嗓音'] }
+  };
+  const preset = mappings[text] || { emotion: [], traits: [] };
+  setChipSelection(els.emotionChips, preset.emotion, { single: false });
+  setChipSelection(els.voiceTraitChips, preset.traits, { single: false });
+}
+function setupChipGroup(container, { single = false } = {}) {
+  if (!container) return;
+  container.addEventListener('click', e => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    const isDefault = !chip.dataset.v;
+    if (single) {
+      container.querySelectorAll('.chip').forEach(x => x.classList.remove('on'));
+      chip.classList.add('on');
+    } else if (isDefault) {
+      container.querySelectorAll('.chip').forEach(x => x.classList.remove('on'));
+      chip.classList.add('on');
+    } else {
+      chip.classList.toggle('on');
+      container.querySelector('.chip[data-v=""]')?.classList.remove('on');
+      if (!container.querySelector('.chip.on[data-v]')) {
+        container.querySelector('.chip[data-v=""]')?.classList.add('on');
+      }
+    }
+    syncControlInputFromChips();
+    updatePreview();
+  });
+}
+function normalizeRoleName(name) {
+  return (name || '').replace(/[^\p{L}\p{N}]/gu, '').toLowerCase();
+}
+function buildVoiceAliases(name) {
+  const raw = (name || '').trim();
+  if (!raw) return [];
+  const parts = raw.split(/[\s\-_/|｜、，,：:（）()\[\]【】]+/).filter(Boolean);
+  const aliases = new Set([raw, ...parts]);
+  const cleaned = raw.replace(/(角色|配音|声音|音色|声线|老师|版本|克隆)/g, '').trim();
+  if (cleaned) aliases.add(cleaned);
+  return Array.from(aliases).map(normalizeRoleName).filter(Boolean);
+}
+function extractBatchTag(text) {
+  const match = text.match(/^(.*?)(?:\[(.+?)\])?\s*$/);
+  return {
+    content: (match?.[1] || text || '').trim(),
+    rawTag: (match?.[2] || '').trim()
+  };
+}
+function findVoiceByRole(role) {
+  const target = normalizeRoleName(role);
+  if (!target) return null;
+  const exact = S.voices.find(v => buildVoiceAliases(v.name).includes(target));
+  if (exact) return exact;
+  const fuzzy = S.voices.find(v => buildVoiceAliases(v.name).some(n => n.includes(target) || target.includes(n)));
+  if (fuzzy) return fuzzy;
+  return S.voices.find(v => {
+    const aliases = buildVoiceAliases(v.name);
+    return aliases.some(n => {
+      const overlap = [...target].filter(ch => n.includes(ch)).length;
+      return overlap >= Math.min(target.length, n.length) && overlap >= 2;
+    });
+  }) || null;
+}
+function buildBatchItemFromLine(line, index) {
+  const match = line.match(/^[（(]?\s*(\d+)\s*[）)]?\s*([^：:]+?)\s*[：:]\s*(.+)$/);
+  if (!match) {
+    return { valid: false, line, index, error: '格式不符合“（序号）角色：台词[标签]”' };
+  }
+  const seq = match[1];
+  const role = match[2].trim();
+  const { content, rawTag } = extractBatchTag(match[3].trim());
+  const voice = findVoiceByRole(role);
+  const englishTag = rawTag && /^[A-Za-z][A-Za-z-]*$/.test(rawTag);
+  return {
+    valid: true,
+    seq,
+    role,
+    text: content,
+    rawTag,
+    controlInstruction: englishTag ? '' : rawTag,
+    synthText: englishTag ? `${content}[${rawTag}]` : content,
+    voice,
+    status: voice ? 'pending' : 'unmatched',
+    error: voice ? '' : '未匹配到已保存人物',
+    audioUrl: '',
+    audioBlob: null,
+    checked: false
+  };
+}
+function safeFilePart(text) {
+  return (text || '').replace(/[\\/:*?"<>|]/g, '').trim();
+}
+function buildBatchFilename(item) {
+  const head = safeFilePart((item.text || '').slice(0, 10)) || '台词';
+  return `${item.seq}-${safeFilePart(item.role) || '角色'}-${head}.wav`;
+}
+function formatDateStamp(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  const hh = String(date.getHours()).padStart(2, '0');
+  const mm = String(date.getMinutes()).padStart(2, '0');
+  const ss = String(date.getSeconds()).padStart(2, '0');
+  return `${y}${m}${d}-${hh}${mm}${ss}`;
+}
+function buildWorkbenchFilename(text, date = new Date(), controlInstruction = '') {
+  const ctrlHead = safeFilePart((controlInstruction || '').trim().slice(0, 24));
+  const textHead = safeFilePart((text || '').trim().slice(0, 12));
+  const stamp = formatDateStamp(date);
+  const parts = [ctrlHead, textHead].filter(Boolean);
+  return parts.length ? `${parts.join('-')}-${stamp}.wav` : `${stamp}.wav`;
+}
+async function triggerNamedDownload({ url, filename, blob = null }) {
+  let fileBlob = blob;
+  if (!fileBlob && url) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`下载失败：${res.status}`);
+    fileBlob = await res.blob();
+  }
+  if (!fileBlob) throw new Error('没有可下载的音频数据');
+  const blobUrl = URL.createObjectURL(fileBlob);
+  const a = document.createElement('a');
+  a.href = blobUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+}
+function updateBatchStatus(text) {
+  els.batchStatus.textContent = text;
+}
+function updateBatchDownloadState() {
+  const downloadable = S.batchItems.filter(it => it.audioUrl && it.checked);
+  els.downloadBatchBtn.disabled = downloadable.length === 0;
+  const generated = S.batchItems.filter(it => it.audioUrl);
+  const allChecked = generated.length > 0 && generated.every(it => it.checked);
+  els.batchSelectAll.checked = allChecked;
+  els.batchSelectAll.indeterminate = generated.length > 0 && !allChecked && generated.some(it => it.checked);
+}
+function updateHistoryActions() {
+  const checked = S.history.filter(it => it.checked);
+  els.historyDownloadBtn.disabled = checked.length === 0;
+  els.historyDeleteBtn.disabled = checked.length === 0;
+  const allChecked = S.history.length > 0 && S.history.every(it => it.checked);
+  els.historySelectAll.checked = allChecked;
+  els.historySelectAll.indeterminate = S.history.length > 0 && !allChecked && checked.length > 0;
+}
+function renderBatchItems() {
+  if (!S.batchItems.length) {
+    els.batchList.innerHTML = '<div style="color:var(--t3);font-size:.78rem">解析后会在这里显示每条对白的匹配结果与生成状态。</div>';
+    updateBatchDownloadState();
+    return;
+  }
+  els.batchList.innerHTML = S.batchItems.map((item, idx) => {
+    if (!item.valid) {
+      return `<div class="batch-item">
+        <div class="batch-item-top">
+          <div class="batch-item-left">
+            <span class="batch-seq">!</span>
+            <div class="batch-main">
+              <div class="batch-role">第 ${idx + 1} 行解析失败</div>
+              <div class="batch-line">${escapeHtml(item.line)}</div>
+              <div class="batch-meta"><span class="batch-pill err">${escapeHtml(item.error)}</span></div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }
+    return `<div class="batch-item">
+      <div class="batch-item-top">
+        <div class="batch-item-left">
+          <input type="checkbox" data-batch-check="${idx}" ${item.checked ? 'checked' : ''} ${item.audioUrl ? '' : 'disabled'}>
+          <span class="batch-seq">${escapeHtml(item.seq)}</span>
+          <div class="batch-main">
+            <div class="batch-header">
+              <div class="batch-role-row">
+                <div class="batch-role">${escapeHtml(item.role)}</div>
+                <select class="sel batch-voice-select" data-batch-voice="${idx}" style="font-size:.74rem">
+                  <option value="">手动选择人物声音</option>
+                  ${S.voices.map(v => `<option value="${escapeHtml(v.key)}" ${item.voice?.key === v.key ? 'selected' : ''}>${escapeHtml(v.name)}</option>`).join('')}
+                </select>
+              </div>
+            </div>
+            <div class="batch-line">${escapeHtml(item.text)}</div>
+            <div class="batch-meta">
+              <span class="batch-pill ${item.voice ? 'ok' : 'err'}">${item.voice ? `匹配：${escapeHtml(item.voice.name)}` : '未匹配人物'}</span>
+              ${item.rawTag ? `<span class="batch-pill">${escapeHtml(/^[A-Za-z][A-Za-z-]*$/.test(item.rawTag) ? `文本标签 [${item.rawTag}]` : `控制指令 ${item.rawTag}`)}</span>` : ''}
+              <span class="batch-pill ${item.status === 'done' ? 'ok' : item.status === 'error' || item.status === 'unmatched' ? 'err' : item.status === 'generating' ? 'warn' : ''}">${item.status === 'done' ? '已生成' : item.status === 'error' ? `失败：${escapeHtml(item.error)}` : item.status === 'unmatched' ? '待补人物' : item.status === 'generating' ? '生成中...' : '待生成'}</span>
+            </div>
+            ${item.audioUrl ? `<audio controls src="${item.audioUrl}"></audio><div style="margin-top:8px"><a class="batch-download" data-batch-download="${idx}" href="#">⬇ 下载 ${escapeHtml(buildBatchFilename(item))}</a></div>` : ''}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  els.batchList.querySelectorAll('[data-batch-check]').forEach(input => {
+    input.addEventListener('change', () => {
+      const idx = +input.dataset.batchCheck;
+      if (S.batchItems[idx]) S.batchItems[idx].checked = input.checked;
+      updateBatchDownloadState();
+    });
+  });
+  els.batchList.querySelectorAll('[data-batch-voice]').forEach(select => {
+    select.addEventListener('change', () => {
+      const idx = +select.dataset.batchVoice;
+      const item = S.batchItems[idx];
+      if (!item) return;
+      const voice = S.voices.find(v => v.key === select.value) || null;
+      item.voice = voice;
+      if (!item.audioUrl) {
+        item.status = voice ? 'pending' : 'unmatched';
+        item.error = voice ? '' : '未匹配到已保存人物';
+      }
+      renderBatchItems();
+      updateBatchStatus(voice ? `已为 ${item.role} 手动指定人物：${voice.name}` : `已清除 ${item.role} 的人物匹配`);
+    });
+  });
+  els.batchList.querySelectorAll('[data-batch-download]').forEach(link => {
+    link.addEventListener('click', async e => {
+      e.preventDefault();
+      const idx = +link.dataset.batchDownload;
+      const item = S.batchItems[idx];
+      if (!item?.audioUrl) return;
+      try {
+        await triggerNamedDownload({
+          url: item.audioUrl,
+          filename: buildBatchFilename(item),
+          blob: item.audioBlob || null
+        });
+      } catch (err) {
+        toast(`下载失败: ${err.message}`, 'er');
+      }
+    });
+  });
+  updateBatchDownloadState();
+}
+function renderHistory() {
+  if (!S.history.length) {
+    els.historyArea.classList.remove('vis');
+    updateHistoryActions();
+    return;
+  }
+  els.historyArea.classList.add('vis');
+  els.historyList.innerHTML = S.history.map((it, i) => `
+    <div class="hi" data-i="${i}">
+      <input type="checkbox" data-history-check="${i}" ${it.checked ? 'checked' : ''}>
+      <button class="hp" data-i="${i}">▶</button>
+      <div class="hf">
+        <div class="ht">${escapeHtml(it.text)}</div>
+        <div class="hm">${it.mode} · ${it.time}</div>
+      </div>
+    </div>
+  `).join('');
+  els.historyList.querySelectorAll('[data-history-check]').forEach(input => {
+    input.addEventListener('click', e => e.stopPropagation());
+    input.addEventListener('change', () => {
+      const idx = +input.dataset.historyCheck;
+      if (S.history[idx]) S.history[idx].checked = input.checked;
+      updateHistoryActions();
+    });
+  });
+  els.historyList.querySelectorAll('.hp, .hi').forEach(el => {
+    el.addEventListener('click', e => {
+      if (e.target.matches('[data-history-check]')) return;
+      e.stopPropagation();
+      const i = +el.dataset.i, it = S.history[i];
+      if (!it) return;
+      els.audioPlayer.src = it.url; els.audioPlayer.play();
+      els.resultArea.classList.add('vis'); els.downloadBtn.href = it.url;
+    });
+  });
+  updateHistoryActions();
+}
+function parseBatchScript() {
+  const lines = els.batchScript.value.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  S.batchItems = lines.map(buildBatchItemFromLine);
+  const validCount = S.batchItems.filter(it => it.valid).length;
+  const matchedCount = S.batchItems.filter(it => it.valid && it.voice).length;
+  renderBatchItems();
+  updateBatchStatus(`已解析 ${validCount} 条对白，匹配到 ${matchedCount} 条人物。未匹配项会保留在列表里，等你在人物库里补充角色后可重新解析。`);
+}
+els.parseBatchBtn.addEventListener('click', parseBatchScript);
+async function refreshBatchQueue() {
+  const hasGenerated = S.batchItems.some(it => it.audioUrl);
+  if (hasGenerated) {
+    const confirmed = await openModal({
+      kicker: '刷新确认',
+      title: '刷新批量队列',
+      body: '刷新会重新按当前脚本和人物库生成队列。',
+      highlight: '已生成但尚未下载的语音记录会被清空，请确认。',
+      actions: [
+        { label: '取消', style: 'secondary', value: false },
+        { label: '确认刷新', style: 'danger', value: true }
+      ]
+    });
+    if (!confirmed) return;
+  }
+  S.batchItems.forEach(it => { if (it.audioUrl?.startsWith('blob:')) URL.revokeObjectURL(it.audioUrl); });
+  parseBatchScript();
+  updateBatchStatus('批量队列已刷新。');
+}
+els.refreshBatchBtn.addEventListener('click', refreshBatchQueue);
+els.batchSelectAll.addEventListener('change', () => {
+  S.batchItems.forEach(item => {
+    if (item.audioUrl) item.checked = els.batchSelectAll.checked;
+  });
+  renderBatchItems();
+});
+els.historySelectAll.addEventListener('change', () => {
+  S.history.forEach(it => { it.checked = els.historySelectAll.checked; });
+  renderHistory();
+});
+els.historyDownloadBtn.addEventListener('click', async () => {
+  const selected = S.history.filter(it => it.checked);
+  for (const it of selected) {
+    try {
+      await triggerNamedDownload({
+        url: it.url,
+        filename: buildWorkbenchFilename(it.text, it.createdAt ? new Date(it.createdAt) : new Date()),
+        blob: it.blob || null
+      });
+    } catch (err) {
+      toast(`下载失败: ${err.message}`, 'er');
+      break;
+    }
+  }
+});
+els.historyDeleteBtn.addEventListener('click', async () => {
+  const selected = S.history.filter(it => it.checked);
+  if (!selected.length) return;
+  const confirmed = await openModal({
+    kicker: '删除确认',
+    title: '删除历史记录',
+    body: `将删除 ${selected.length} 条历史记录。`,
+    highlight: '删除后会清空这些已保存的历史播放记录。',
+    actions: [
+      { label: '取消', style: 'secondary', value: false },
+      { label: '删除', style: 'danger', value: true }
+    ]
+  });
+  if (!confirmed) return;
+  selected.forEach(it => { if (it.url?.startsWith('blob:')) URL.revokeObjectURL(it.url); });
+  S.history = S.history.filter(it => !it.checked);
+  renderHistory();
+  toast('🗑️ 已删除选中的历史记录', 'ok');
+});
+els.downloadBatchBtn.addEventListener('click', async () => {
+  const selected = S.batchItems.filter(it => it.audioUrl && it.checked);
+  for (const item of selected) {
+    try {
+      await triggerNamedDownload({
+        url: item.audioUrl,
+        filename: buildBatchFilename(item),
+        blob: item.audioBlob || null
+      });
+    } catch (err) {
+      toast(`下载失败: ${err.message}`, 'er');
+      break;
+    }
+  }
+});
+
+// 更新字符计数
+els.targetText.addEventListener('input', () => {
+  els.charCount.textContent = els.targetText.value.length;
+  updatePreview();
+});
+els.charCount.textContent = els.targetText.value.length;
+
+// 更新风格预览
+function updatePreview() {
+  const ctrl = els.controlInstruction.value.trim();
+  if (ctrl) {
+    const tags = ctrl.split(/[\s,，]+/).filter(Boolean).slice(0, 8);
+    els.stylePreview.innerHTML = tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join(' ');
+  } else {
+    els.stylePreview.innerHTML = '<span style="color:var(--t3)">（默认，无额外风格修饰）</span>';
+  }
+  els.requestPreview.innerHTML = buildCurlPreview();
+}
+setupChipGroup(els.emotionChips, { single: false });
+setupChipGroup(els.voiceTraitChips, { single: false });
+els.controlInstruction.addEventListener('input', updatePreview);
+els.cfgSlider.addEventListener('input', () => {
+  els.cfgValue.textContent = parseFloat(els.cfgSlider.value).toFixed(1);
+  updatePreview();
+});
+updatePreview();
+
+// 快速风格预设
+document.querySelectorAll('.ex-chip').forEach(btn => {
+  btn.addEventListener('click', () => {
+    applyPresetToChips(btn.dataset.ctrl);
+    syncControlInputFromChips();
+    if (!els.controlInstruction.value.trim()) {
+      els.controlInstruction.value = btn.dataset.ctrl;
+    }
+    updatePreview();
+    toast(S.selectedVoice || S.hasTempAudio ? '✅ 风格预设已应用，并将叠加到当前参考音频' : '✅ 风格预设已应用', 'ok');
+  });
+});
+
+els.applyCtrl.addEventListener('click', () => {
+  updatePreview();
+  toast(els.controlInstruction.value.trim() ? '✅ 控制指令已应用，可与参考音频叠加' : '⚠️ 控制指令为空', els.controlInstruction.value.trim() ? 'ok' : '');
+});
+
+// 音频标签插入（官方英文格式）
+document.querySelectorAll('.sb').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tag = btn.dataset.t;
+    const p = els.targetText.selectionStart;
+    const v = els.targetText.value;
+    els.targetText.value = v.slice(0, p) + tag + v.slice(p);
+    els.targetText.focus();
+    els.targetText.setSelectionRange(p + tag.length, p + tag.length);
+    els.charCount.textContent = els.targetText.value.length;
+    updatePreview();
+    toast(`✅ 已插入标签: ${tag}`, 'ok');
+  });
+});
+
+// 文件上传功能
+function handleFileSelect(file) {
+  if (!file) return;
+  if (!file.type.startsWith('audio/')) return toast('❌ 请选择音频文件', 'er');
+  if (file.size > 10 * 1024 * 1024) return toast('❌ 音频不能超过 10MB', 'er');
+  
+  S.recordedBlob = null; els.recPreview.classList.remove('show');
+  S.uploadedFile = file;
+  
+  els.previewName.textContent = file.name;
+  els.previewSize.textContent = formatFileSize(file.size);
+  
+  const audio = new Audio();
+  audio.src = URL.createObjectURL(file);
+  audio.onloadedmetadata = () => {
+    const dur = audio.duration;
+    els.previewDuration.textContent = fmt(dur);
+    if (dur < 5) toast('⚠️ 参考音频建议 ≥5 秒，效果更佳', '');
+    URL.revokeObjectURL(audio.src);
+  };
+  
+  els.uploadPreview.classList.add('show');
+  updateTempAudioStatus();
+  updatePreview();
+  toast('✅ 文件已选择，可直接生成', 'ok');
+}
+
+// 拖拽上传
+['dragenter','dragover','dragleave','drop'].forEach(evt => {
+  els.uploadArea.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); }, false);
+});
+['dragenter','dragover'].forEach(evt => {
+  els.uploadArea.addEventListener(evt, () => els.uploadArea.classList.add('dragover'), false);
+});
+['dragleave','drop'].forEach(evt => {
+  els.uploadArea.addEventListener(evt, () => els.uploadArea.classList.remove('dragover'), false);
+});
+els.uploadArea.addEventListener('drop', e => {
+  const file = e.dataTransfer.files[0];
+  handleFileSelect(file);
+}, false);
+
+els.refAudio.addEventListener('change', e => handleFileSelect(e.target.files[0]));
+
+els.previewRemove.addEventListener('click', e => {
+  e.stopPropagation();
+  S.uploadedFile = null;
+  els.refAudio.value = '';
+  els.uploadPreview.classList.remove('show');
+  updateTempAudioStatus();
+  updatePreview();
+  toast('🗑️ 已移除文件', 'ok');
+});
+
+// 录音功能
+let recStartTime = 0, recInterval = null, waveformBars = [];
+
+function initWaveform() {
+  els.waveform.innerHTML = '';
+  waveformBars = [];
+  for (let i = 0; i < 40; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'waveform-bar';
+    bar.style.left = `${i * 10}px`;
+    bar.style.height = '2px';
+    els.waveform.appendChild(bar);
+    waveformBars.push(bar);
+  }
+}
+initWaveform();
+
+function updateWaveform(data) {
+  if (!data || !waveformBars.length) return;
+  const len = Math.min(data.length, waveformBars.length);
+  for (let i = 0; i < len; i++) {
+    const h = Math.abs(data[i]) * 35 + 2;
+    waveformBars[i].style.height = `${h}px`;
+  }
+}
+
+async function startRecording() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { 
+      echoCancellation: true, noiseSuppression: true, sampleRate: 44100 
+    }});
+    
+    S.mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+    S.audioChunks = [];
+    
+    S.mediaRecorder.ondataavailable = e => { if (e.data.size > 0) S.audioChunks.push(e.data); };
+    S.mediaRecorder.onstop = async () => {
+      try {
+        const rawRecording = new Blob(S.audioChunks, { type: 'audio/webm' });
+        S.recordedBlob = await convertBlobToWavFile(rawRecording, `recorded_${Date.now()}.wav`);
+        const url = URL.createObjectURL(S.recordedBlob);
+        els.recAudio.src = url;
+        els.recPreview.classList.add('show');
+        updateTempAudioStatus();
+        updatePreview();
+        
+        const audio = new Audio(url);
+        audio.onloadedmetadata = () => {
+          if (audio.duration < 5) toast('⚠️ 录音建议 ≥5 秒，效果更佳', '');
+          URL.revokeObjectURL(url);
+        };
+        
+        toast('🎤 录音已转换为 WAV，可直接生成', 'ok');
+      } catch (err) {
+        console.error(err);
+        S.recordedBlob = null;
+        updateTempAudioStatus();
+        updatePreview();
+        toast(`❌ 录音转换失败: ${err.message}`, 'er');
+      } finally {
+        stream.getTracks().forEach(t => t.stop());
+      }
+    };
+    
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const source = audioCtx.createMediaStreamSource(stream);
+    const analyzer = audioCtx.createAnalyser();
+    analyzer.fftSize = 128;
+    source.connect(analyzer);
+    const dataArray = new Uint8Array(analyzer.frequencyBinCount);
+    
+    function visualize() {
+      if (!S.isRecording) return;
+      analyzer.getByteTimeDomainData(dataArray);
+      updateWaveform(dataArray);
+      requestAnimationFrame(visualize);
+    }
+    visualize();
+    
+    S.mediaRecorder.start();
+    S.isRecording = true;
+    recStartTime = Date.now();
+    
+    S.uploadedFile = null; els.refAudio.value = ''; els.uploadPreview.classList.remove('show');
+    updateTempAudioStatus();
+    
+    els.recBtn.classList.add('recording');
+    els.recBtn.textContent = '⏹';
+    els.recStatus.textContent = '🔴 录制中...（建议 5-10 秒）';
+    els.recStatus.classList.add('recording');
+    els.recBtn.disabled = false;
+    
+    recInterval = setInterval(() => {
+      const sec = Math.floor((Date.now() - recStartTime) / 1000);
+      els.recTimer.textContent = fmt(sec);
+      if (sec >= 30) stopRecording();
+    }, 1000);
+    
+  } catch (e) {
+    console.error(e);
+    toast('❌ 无法访问麦克风，请检查权限', 'er');
+  }
+}
+
+function stopRecording() {
+  if (S.mediaRecorder && S.isRecording) {
+    S.mediaRecorder.stop();
+    S.isRecording = false;
+    clearInterval(recInterval);
+    els.recTimer.textContent = '00:00';
+    els.recBtn.classList.remove('recording');
+    els.recBtn.textContent = '🔴';
+    els.recStatus.textContent = '✅ 录制完成，请预览或使用';
+    els.recStatus.classList.remove('recording');
+    initWaveform();
+  }
+}
+
+els.recBtn.addEventListener('click', () => {
+  if (S.isRecording) stopRecording();
+  else startRecording();
+});
+
+els.recRetake.addEventListener('click', () => {
+  els.recPreview.classList.remove('show');
+  S.recordedBlob = null;
+  updateTempAudioStatus();
+  updatePreview();
+  if (!S.isRecording) startRecording();
+});
+
+els.recUse.addEventListener('click', () => {
+  if (S.recordedBlob) {
+    S.recordedBlob = toAudioFile(S.recordedBlob, `recorded_${Date.now()}.wav`);
+    updateTempAudioStatus();
+    updatePreview();
+    toast('✅ 录音已确认可用', 'ok');
+  }
+});
+
+// 渲染人物列表，支持播放预览
+async function renderVoices() {
+  const voices = await idb.getAll();
+  S.voices = voices;
+  if (S.batchItems.length) {
+    S.batchItems = S.batchItems.map(item => {
+      if (!item.valid) return item;
+      const voice = findVoiceByRole(item.role);
+      return {
+        ...item,
+        voice,
+        status: item.audioUrl ? item.status : (voice ? 'pending' : 'unmatched'),
+        error: item.audioUrl ? item.error : (voice ? '' : '未匹配到已保存人物')
+      };
+    });
+    renderBatchItems();
+  }
+  updateVoiceStatus();
+  if (voices.length === 0) {
+    els.voiceList.innerHTML = '<div style="color:var(--t3);font-size:.76rem">暂无注册人物，上传或录音开始注册 👆</div>';
+    return;
+  }
+  
+  els.voiceList.innerHTML = voices.map(v => `
+    <div class="voice-chip ${S.selectedVoice?.key === v.key ? 'on' : ''}" data-key="${v.key}">
+      <span>${escapeHtml(v.name)}</span>
+      <span class="key">${v.key}</span>
+      <div class="actions">
+        <button class="play-btn" data-key="${v.key}" title="试听参考音频">🔊</button>
+        <span class="rm" data-key="${v.key}" title="删除">×</span>
+      </div>
+    </div>
+  `).join('');
+  
+  els.voiceList.querySelectorAll('.voice-chip').forEach(chip => {
+    chip.onclick = e => {
+      if (e.target.classList.contains('rm') || e.target.classList.contains('play-btn')) {
+        e.stopPropagation();
+        return;
+      }
+      selectVoice(chip.dataset.key);
+    };
+  });
+  
+  els.voiceList.querySelectorAll('.play-btn').forEach(btn => {
+    btn.onclick = e => {
+      e.stopPropagation();
+      playVoicePreview(btn.dataset.key);
+    };
+  });
+  
+  els.voiceList.querySelectorAll('.rm').forEach(btn => {
+    btn.onclick = e => {
+      e.stopPropagation();
+      deleteVoice(btn.dataset.key);
+    };
+  });
+}
+
+// 播放人物声音预览
+async function playVoicePreview(key) {
+  const voice = S.voices.find(v => v.key === key);
+  if (!voice) return;
+  
+  try {
+    if (S.playingVoice) {
+      S.playingVoice.pause();
+      S.playingVoice = null;
+    }
+    
+    const audioBlob = new Blob([voice.audio], { type: voice.type || 'audio/webm' });
+    const audioUrl = URL.createObjectURL(audioBlob);
+    const audio = new Audio(audioUrl);
+    
+    audio.onended = () => {
+      URL.revokeObjectURL(audioUrl);
+      S.playingVoice = null;
+    };
+    
+    S.playingVoice = audio;
+    await audio.play();
+    toast(`🔊 正在播放：${voice.name}`, 'ok');
+  } catch (e) {
+    console.error(e);
+    toast('❌ 播放失败', 'er');
+  }
+}
+
+function selectVoice(key) {
+  S.selectedVoice = S.voices.find(v => v.key === key);
+  S.uploadedFile = null; S.recordedBlob = null;
+  els.uploadPreview.classList.remove('show'); els.recPreview.classList.remove('show');
+  updateTempAudioStatus();
+  updateVoiceStatus();
+  renderVoices(); updatePreview();
+  toast(`✅ 已选择人物：${S.selectedVoice.name}${els.controlInstruction.value.trim() ? '，会叠加当前控制指令' : ''}`, 'ok');
+}
+
+async function deleteVoice(key) {
+  const voice = S.voices.find(v => v.key === key);
+  const confirmed = await openModal({
+    kicker: '删除确认',
+    title: '删除人物声音',
+    body: `你将删除本地保存的人物声音 <strong>${escapeHtml(voice?.name || key)}</strong>。`,
+    highlight: '删除后该人物的本地参考音频与匹配记录将不可恢复。',
+    actions: [
+      { label: '取消', style: 'secondary', value: false },
+      { label: '删除', style: 'danger', value: true }
+    ]
+  });
+  if (!confirmed) return;
+  await idb.delete(key);
+  if (S.selectedVoice?.key === key) S.selectedVoice = null;
+  await renderVoices();
+  toast('🗑️ 已删除', 'ok');
+}
+
+// 注册新人物
+els.registerBtn.addEventListener('click', async () => {
+  const name = els.voiceName.value.trim();
+  const audioSource = S.recordedBlob || S.uploadedFile;
+  
+  if (!name) return toast('❌ 请输入人物名称', 'er');
+  if (!audioSource) return toast('❌ 请上传或录制参考音频', 'er');
+  if (audioSource.size > 10 * 1024 * 1024) return toast('❌ 音频不能超过 10MB', 'er');
+
+  try {
+    toast('⏳ 生成人物 Key 中...', '');
+    const hash = await computeHash(audioSource);
+    const key = makeKey(name, hash);
+    
+    const existing = S.voices.find(v => v.key === key);
+    if (existing) { toast(`⚠️ 人物已存在: ${existing.key}`, 'er'); selectVoice(key); return; }
+
+    const arrayBuffer = await audioSource.arrayBuffer();
+    const fileType = audioSource.type || 'audio/webm';
+    
+    await idb.put({ 
+      key, name, hash, 
+      audio: arrayBuffer,
+      type: fileType, 
+      createdAt: Date.now() 
+    });
+    
+    els.voiceName.value = '';
+    S.uploadedFile = null; S.recordedBlob = null;
+    els.refAudio.value = ''; els.uploadPreview.classList.remove('show');
+    els.recPreview.classList.remove('show'); initWaveform();
+    updateTempAudioStatus();
+    
+    await renderVoices(); selectVoice(key);
+    toast(`🎉 注册成功！人物：${name}`, 'ok');
+  } catch (e) {
+    console.error(e); toast(`❌ 注册失败: ${e.message}`, 'er');
+  }
+});
+
+// 连接服务
+async function connect() {
+  try {
+    toast('🔌 连接 VoxCPM 服务中...', '');
+    S.client = await Client.connect("openbmb/VoxCPM-Demo");
+    log('✅ 连接成功', 'rs'); return true;
+  } catch (e) {
+    log(`连接失败: ${e.message}`, 'er'); toast(`连接失败: ${e.message}`, 'er'); return false;
+  }
+}
+async function synthesizeAudio({ text, controlInstruction = '', referenceBlob = null }) {
+  const result = await S.client.predict("/generate", {
+    text_input: text,
+    control_instruction: controlInstruction,
+    reference_wav_path_input: referenceBlob,
+    use_prompt_text: false, prompt_text_input: "",
+    cfg_value_input: parseFloat(els.cfgSlider.value),
+    do_normalize: els.doNormalize.checked, denoise: els.denoise.checked
+  });
+
+  const audio = result.data?.[0];
+  if (!audio) throw new Error('返回数据异常');
+
+  let url = null;
+  let blob = null;
+  if (audio.url) url = audio.url;
+  else if (audio.base64) {
+    const b64 = audio.base64.split(',')[1] || audio.base64;
+    const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+    blob = new Blob([bytes], { type: 'audio/wav' });
+    url = URL.createObjectURL(blob);
+  } else if (audio instanceof Blob) {
+    blob = audio;
+    url = URL.createObjectURL(audio);
+  } else if (audio.path) {
+    url = audio.path.startsWith('http') ? audio.path : `https://openbmb-voxcpm-demo.hf.space${audio.path}`;
+  }
+  if (!url) throw new Error('无法解析音频');
+  return { url, blob, audio };
+}
+
+// 生成语音
+async function generate() {
+  const text = els.targetText.value.trim();
+  if (!text) return toast('❌ 请输入目标文本', 'er');
+  if (!S.client && !(await connect())) return;
+  
+  const hasVoice = !!S.selectedVoice;
+  const hasControl = !!els.controlInstruction.value.trim();
+  const hasTemp = !!S.recordedBlob || !!S.uploadedFile;
+  
+  if (!hasVoice && !hasControl && !hasTemp) {
+    return toast('❌ 请选择人物、填写控制指令 或 上传/录制音频', 'er');
+  }
+
+  els.generateBtn.classList.add('ld'); els.generateBtn.disabled = true;
+  
+  let modeText = '';
+  if (hasVoice && hasControl) modeText = `🎤 ${S.selectedVoice.name} + 🎭 风格控制`;
+  else if (hasVoice) modeText = `🎤 ${S.selectedVoice.name}`;
+  else if (hasTemp && hasControl) modeText = `${S.recordedBlob ? '🎤 临时录音' : '📁 临时上传'} + 🎭 风格控制`;
+  else if (hasTemp) modeText = S.recordedBlob ? '🎤 临时录音' : '📁 临时上传';
+  else modeText = `🎭 ${els.controlInstruction.value.trim()}`;
+  
+  toast(`${modeText} · 生成中...`, '');
+
+  try {
+    let refBlob = null;
+    
+    if (hasVoice) {
+      refBlob = new Blob([S.selectedVoice.audio], { type: S.selectedVoice.type || 'audio/webm' });
+    } else if (S.recordedBlob) {
+      refBlob = toAudioFile(S.recordedBlob, `recorded_${Date.now()}.wav`);
+    } else if (S.uploadedFile) {
+      refBlob = S.uploadedFile;
+    }
+
+    log('✅ API 响应接收', 'rs');
+    const { url, blob, audio } = await synthesizeAudio({
+      text,
+      controlInstruction: hasControl ? els.controlInstruction.value.trim() : '',
+      referenceBlob: refBlob
+    });
+    S.generatedBlob = blob;
+
+    els.audioPlayer.src = url; els.audioPlayer.load();
+    els.sampleRate.textContent = audio.sample_rate || 44100;
+    els.duration.textContent = (audio.duration || 0).toFixed(1);
+    els.resultArea.classList.add('vis'); els.audioInfo.style.display = 'flex';
+    
+    const createdAt = Date.now();
+    S.history.unshift({
+      text: text.slice(0, 50),
+      mode: modeText,
+      url: url,
+      blob: blob || S.generatedBlob || null,
+      time: new Date(createdAt).toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'}),
+      createdAt,
+      checked: false
+    });
+    if (S.history.length > 10) { const r = S.history.pop(); if (r.url !== url) URL.revokeObjectURL(r.url); }
+    renderHistory();
+    
+    toast('🎉 合成成功！', 'ok');
+    els.resultArea.scrollIntoView({ behavior: 'smooth' });
+  } catch (e) {
+    console.error(e); log(`生成失败: ${e.message}`, 'er'); toast(`生成失败: ${e.message}`, 'er');
+  } finally {
+    els.generateBtn.classList.remove('ld'); els.generateBtn.disabled = false;
+  }
+}
+async function generateBatch() {
+  if (S.batchGenerating) return;
+  if (!S.batchItems.length) parseBatchScript();
+  const queue = S.batchItems.filter(it => it.valid && it.voice);
+  if (!queue.length) {
+    updateBatchStatus('没有可生成的条目。请先解析脚本，并确认角色名称能匹配到人物库。');
+    return;
+  }
+  if (!S.client && !(await connect())) return;
+
+  S.batchGenerating = true;
+  els.generateBatchBtn.disabled = true;
+  els.parseBatchBtn.disabled = true;
+  updateBatchStatus(`开始批量生成，共 ${queue.length} 条。`);
+
+  for (const item of queue) {
+    item.status = 'generating';
+    item.error = '';
+    renderBatchItems();
+    try {
+      const refBlob = new Blob([item.voice.audio], { type: item.voice.type || 'audio/webm' });
+      const { url, blob } = await synthesizeAudio({
+        text: item.synthText,
+        controlInstruction: item.controlInstruction,
+        referenceBlob: refBlob
+      });
+      item.audioUrl = url;
+      item.audioBlob = blob;
+      item.checked = true;
+      item.status = 'done';
+      updateBatchStatus(`已生成 ${item.seq} - ${item.role}`);
+    } catch (e) {
+      console.error(e);
+      item.status = 'error';
+      item.error = e.message;
+      updateBatchStatus(`第 ${item.seq} 条生成失败：${e.message}`);
+    }
+    renderBatchItems();
+  }
+
+  S.batchGenerating = false;
+  els.generateBatchBtn.disabled = false;
+  els.parseBatchBtn.disabled = false;
+  const success = S.batchItems.filter(it => it.status === 'done').length;
+  const failed = S.batchItems.filter(it => it.status === 'error').length;
+  updateBatchStatus(`批量生成完成：成功 ${success} 条，失败 ${failed} 条。可勾选后点击“下载选中”。`);
+}
+els.generateBatchBtn.addEventListener('click', generateBatch);
+
+// 下载/播放
+els.downloadBtn.addEventListener('click', async () => {
+  if (!els.audioPlayer.src) return;
+  try {
+    await triggerNamedDownload({
+      url: els.audioPlayer.src,
+      filename: buildWorkbenchFilename(els.targetText.value, new Date(), els.controlInstruction.value),
+      blob: S.generatedBlob || null
+    });
+  } catch (err) {
+    toast(`下载失败: ${err.message}`, 'er');
+  }
+});
+
+let playing = false;
+els.playBtn.addEventListener('click', () => { playing ? els.audioPlayer.pause() : els.audioPlayer.play(); });
+els.audioPlayer.addEventListener('play', () => { playing = true; els.playBtn.textContent = '⏸'; });
+els.audioPlayer.addEventListener('pause', () => { playing = false; els.playBtn.textContent = '▶'; });
+els.audioPlayer.addEventListener('ended', () => { playing = false; els.playBtn.textContent = '▶'; els.progressFill.style.width = '100%'; });
+els.audioPlayer.addEventListener('timeupdate', () => {
+  if (els.audioPlayer.duration) {
+    els.progressFill.style.width = (els.audioPlayer.currentTime / els.audioPlayer.duration * 100) + '%';
+    els.currentTime.textContent = fmt(els.audioPlayer.currentTime);
+  }
+});
+els.audioPlayer.addEventListener('loadedmetadata', () => els.totalTime.textContent = fmt(els.audioPlayer.duration));
+els.progressBar.addEventListener('click', e => {
+  if (els.audioPlayer.duration) {
+    const rect = els.progressBar.getBoundingClientRect();
+    els.audioPlayer.currentTime = (e.clientX - rect.left) / rect.width * els.audioPlayer.duration;
+  }
+});
+
+els.generateBtn.addEventListener('click', generate);
+document.addEventListener('keydown', e => { if ((e.ctrlKey||e.metaKey)&&e.key==='Enter') { e.preventDefault(); generate(); } });
+
+// 初始化
+window.addEventListener('DOMContentLoaded', async () => {
+  await renderVoices();
+  parseBatchScript();
+  if (navigator.mediaDevices?.getUserMedia) {
+    navigator.mediaDevices.getUserMedia({audio:true}).then(s=>s.getTracks().forEach(t=>t.stop())).catch(()=>{
+      els.recBtn.disabled = true; els.recBtn.title = '麦克风权限未授权';
+    });
+  }
+  log('🚀 页面加载完成', 'nf');
+});
+</script>
+</body>
+</html>
