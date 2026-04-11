@@ -4,9 +4,22 @@
 > 编写时间：2026年4月11日  
 > 项目类型：纯前端单文件页面  
 > 页面文件：`VoxCPM-TTS.html`  
+> 在线地址：[https://lxl8800.com/tool/html/VoxCPM-TTS.html](https://lxl8800.com/tool/html/VoxCPM-TTS.html)  
 > 目标服务：`openbmb/VoxCPM-Demo`  
 > 官方 Space：[https://huggingface.co/spaces/openbmb/VoxCPM-Demo](https://huggingface.co/spaces/openbmb/VoxCPM-Demo)  
 > 官方最佳实践：[https://voxcpm.readthedocs.io/zh-cn/latest/cookbook.html](https://voxcpm.readthedocs.io/zh-cn/latest/cookbook.html)
+
+* * *
+
+## 使用方式
+
+你可以用两种方式使用这个项目：
+
+1. 在线直接打开：  
+   [https://lxl8800.com/tool/html/VoxCPM-TTS.html](https://lxl8800.com/tool/html/VoxCPM-TTS.html)
+2. 下载仓库中的 `VoxCPM-TTS.html`，在本地浏览器里直接打开使用
+
+这是一个单文件页面，不依赖本地后端服务，所以在线可用，本地打开也可用。
 
 * * *
 
