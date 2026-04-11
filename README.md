@@ -134,27 +134,49 @@ https://github.com/你的用户名/VoxCPM-TTS
 
 如果 Cloudflare 让你填写构建配置，可以这样填：
 
-1. `Root directory`：
+1. `项目名称`：
 
 ```text
-voxcpm-worker-relay
+voxcpm-relay
 ```
 
-2. `Build command`：
+这个名字要和 `voxcpm-worker-relay/wrangler.jsonc` 里的 `name` 保持一致。
+
+2. `构建命令`：
 
 ```text
 npm install
 ```
 
-3. `Deploy command`：
+3. `部署命令`：
 
-留空即可。
+```text
+npx wrangler deploy
+```
 
-4. `Output directory`：
+4. 如果开启了“非生产分支构建”，`非生产分支部署命令` 可以填：
+
+```text
+npx wrangler versions upload
+```
+
+5. `路径` 或 `Root directory`：
+
+```text
+voxcpm-worker-relay
+```
+
+注意：
+
+1. 这里填的是仓库里的目录名，不是网站路径
+2. 不要写成 `/voxcpm-worker-relay`
+3. 正确写法是不带前导斜杠的 `voxcpm-worker-relay`
+
+6. `Output directory`：
 
 留空即可，因为 Worker 会直接读取 `wrangler.jsonc` 里的 `assets.directory = "./public"`。
 
-5. `Framework preset`：
+7. `Framework preset`：
 
 不选也可以，保持默认。
 
