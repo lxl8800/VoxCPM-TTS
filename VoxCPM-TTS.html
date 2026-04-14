@@ -1152,11 +1152,16 @@ async function ensureServiceReady() {
   }
 }
 function getRelayBase() {
+  return getRelayCandidates()[0] || '';
+}
+function getRelayCandidates() {
   const queryRelay = new URLSearchParams(location.search).get('relay');
   const fromWindow = window.VOXCPM_RELAY_BASE || '';
   const sameOrigin = location.protocol.startsWith('http') ? location.origin : '';
-  const base = (queryRelay || fromWindow || sameOrigin).trim();
-  return base.replace(/\/$/, '');
+  return [queryRelay, sameOrigin, fromWindow]
+    .map(v => (v || '').trim().replace(/\/$/, ''))
+    .filter(Boolean)
+    .filter((v, i, arr) => arr.indexOf(v) === i);
 }
 function dataUrlToBlob(dataUrl) {
   const [meta, body] = dataUrl.split(',');
@@ -1164,21 +1169,21 @@ function dataUrlToBlob(dataUrl) {
   const bytes = Uint8Array.from(atob(body || ''), c => c.charCodeAt(0));
   return new Blob([bytes], { type: mime });
 }
-async function probeRelayAccess() {
-  const relayBase = getRelayBase();
-  if (!relayBase) return false;
-  try {
-    const res = await fetch(`${relayBase}/api/status`, { cache: 'no-store' });
-    if (!res.ok) return false;
-    const data = await res.json();
-    if (!data?.ok) return false;
-    S.useRelay = true;
-    S.relayBase = relayBase;
-    setServiceStatus('ok', `已切换海外中转 · ${relayBase}`);
-    return true;
-  } catch (_) {
-    return false;
+async function probeRelayAccess(base = '') {
+  const candidates = base ? [base] : getRelayCandidates();
+  for (const relayBase of candidates) {
+    try {
+      const res = await fetch(`${relayBase}/api/status`, { cache: 'no-store' });
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (!data?.ok) continue;
+      S.useRelay = true;
+      S.relayBase = relayBase;
+      setServiceStatus('ok', `已切换海外中转 · ${relayBase}`);
+      return true;
+    } catch (_) {}
   }
+  return false;
 }
 async function probeDirectAccess() {
   try {
@@ -1198,13 +1203,9 @@ async function probeDirectAccess() {
 }
 async function probeServiceAccess() {
   setServiceStatus('checking', '正在检测当前网络环境...');
-  // ① 优先尝试直连
   if (await probeDirectAccess()) return true;
-  // ② 直连失败后，尝试中转（需已配置）
-  const relayBase = getRelayBase();
-  if (relayBase && await probeRelayAccess()) return true;
-  // ③ 全部失败
-  setServiceStatus('error', '当前网络环境不支持 · HuggingFace 与海外中转均不可用');
+  if (await probeRelayAccess()) return true;
+  setServiceStatus('error', '直连和中转均不可用，请检查网络，或访问官方 Space：https://huggingface.co/spaces/openbmb/VoxCPM-Demo');
   return false;
 }
 function highlightJson(value) {
