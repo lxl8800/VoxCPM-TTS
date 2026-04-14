@@ -429,7 +429,7 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
     <button class="tab-btn active" data-tab="workbench">🛠 工作台</button>
     <button class="tab-btn" data-tab="batch">🎬 批量对白</button>
     <button class="tab-btn" data-tab="guide">📘 使用说明</button>
-    <a class="tab-link" href="https://huggingface.co/spaces/openbmb/VoxCPM-Demo" target="_blank" rel="noopener noreferrer">↗ 官方 Space</a>
+    <a class="tab-link" href="https://huggingface.co/spaces/openbmb/VoxCPM-Demo" target="_blank" rel="noopener noreferrer">↗ 官方 Space（可能受限）</a>
   </div>
 
   <div class="page active" data-page="workbench">
@@ -1205,7 +1205,7 @@ async function probeServiceAccess() {
   setServiceStatus('checking', '正在检测当前网络环境...');
   if (await probeDirectAccess()) return true;
   if (await probeRelayAccess()) return true;
-  setServiceStatus('error', '直连和中转均不可用，请检查网络，或访问官方 Space：https://huggingface.co/spaces/openbmb/VoxCPM-Demo');
+  setServiceStatus('error', '直连和中转均不可用。官方 Space 可能受 WAF 或地区网络限制，请检查中转地址或网络代理。');
   return false;
 }
 function highlightJson(value) {
