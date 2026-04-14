@@ -899,6 +899,9 @@ const S = {
   useRelay: false, relayBase: '',
   bootChecking: false
 };
+const DIRECT_PROBE_TIMEOUT_MS = 12000;
+const RELAY_PROBE_TIMEOUT_MS = 8000;
+const MAX_BOOT_PROBE_ATTEMPTS = 3;
 
 const els = {
   tabButtons: Array.from(document.querySelectorAll('.tab-btn')),
@@ -1136,9 +1139,24 @@ function hideBootModal() {
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+function timeoutAfter(ms, label) {
+  return new Promise((_, reject) => {
+    setTimeout(() => reject(new Error(`${label} timeout`)), ms);
+  });
+}
+async function fetchWithTimeout(url, options = {}, timeoutMs = RELAY_PROBE_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
 async function ensureServiceReady() {
   showBootModal();
-  while (true) {
+  for (let attempt = 1; attempt <= MAX_BOOT_PROBE_ATTEMPTS; attempt += 1) {
+    setServiceStatus('checking', `第 ${attempt} 次检测：优先尝试直连，失败后自动切换中转。`);
     const ok = await probeServiceAccess();
     if (ok) {
       updateBootModal('ok', S.useRelay
@@ -1148,8 +1166,15 @@ async function ensureServiceReady() {
       hideBootModal();
       return true;
     }
-    await sleep(3000);
+    if (attempt < MAX_BOOT_PROBE_ATTEMPTS) {
+      setServiceStatus('error', `第 ${attempt} 次检测失败，3 秒后自动重试。若长时间无法连接，请检查中转地址或网络代理。`);
+      await sleep(3000);
+    }
   }
+  setServiceStatus('error', `已连续检测 ${MAX_BOOT_PROBE_ATTEMPTS} 次失败，先进入页面。生成时会继续按直连优先、中转兜底的顺序重试。`);
+  await sleep(1400);
+  hideBootModal();
+  return false;
 }
 function getRelayBase() {
   return getRelayCandidates()[0] || '';
@@ -1173,7 +1198,8 @@ async function probeRelayAccess(base = '') {
   const candidates = base ? [base] : getRelayCandidates();
   for (const relayBase of candidates) {
     try {
-      const res = await fetch(`${relayBase}/api/status`, { cache: 'no-store' });
+      setServiceStatus('checking', `直连不可用，正在尝试中转：${relayBase}（最多等待 ${RELAY_PROBE_TIMEOUT_MS / 1000} 秒）`);
+      const res = await fetchWithTimeout(`${relayBase}/api/status`, { cache: 'no-store' });
       if (!res.ok) continue;
       const data = await res.json();
       if (!data?.ok) continue;
@@ -1187,9 +1213,10 @@ async function probeRelayAccess(base = '') {
 }
 async function probeDirectAccess() {
   try {
+    setServiceStatus('checking', `正在尝试直连 HuggingFace：openbmb/VoxCPM-Demo（最多等待 ${DIRECT_PROBE_TIMEOUT_MS / 1000} 秒）`);
     const client = await Promise.race([
       Client.connect("openbmb/VoxCPM-Demo"),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 12000))
+      timeoutAfter(DIRECT_PROBE_TIMEOUT_MS, 'direct')
     ]);
     S.client = client;
     S.useRelay = false;
@@ -1202,10 +1229,10 @@ async function probeDirectAccess() {
   }
 }
 async function probeServiceAccess() {
-  setServiceStatus('checking', '正在检测当前网络环境...');
+  setServiceStatus('checking', '正在检测当前网络环境：先直连，失败后尝试中转...');
   if (await probeDirectAccess()) return true;
   if (await probeRelayAccess()) return true;
-  setServiceStatus('error', '直连和中转均不可用。官方 Space 可能受 WAF 或地区网络限制，请检查中转地址或网络代理。');
+  setServiceStatus('error', '本次检测失败：直连和中转均不可用。官方 Space 可能受 WAF 或地区网络限制，请检查中转地址或网络代理。');
   return false;
 }
 function highlightJson(value) {
@@ -2210,6 +2237,11 @@ async function connect() {
 
     if (S.useRelay) {
       setServiceStatus('ok', `已切换海外中转 · ${S.relayBase || 'cloudflare-worker'}`);
+      return true;
+    }
+
+    if (S.client) {
+      setServiceStatus('ok', '已直连 HuggingFace · openbmb/VoxCPM-Demo');
       return true;
     }
 
