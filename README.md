@@ -8,6 +8,7 @@
 > 目标服务：`openbmb/VoxCPM-Demo`  
 > 官方 Space：[https://huggingface.co/spaces/openbmb/VoxCPM-Demo](https://huggingface.co/spaces/openbmb/VoxCPM-Demo)  
 > 官方最佳实践：[https://voxcpm.readthedocs.io/zh-cn/latest/cookbook.html](https://voxcpm.readthedocs.io/zh-cn/latest/cookbook.html)
+> 官方项目：[https://github.com/OpenBMB/VoxCPM/](https://github.com/OpenBMB/VoxCPM/)
 
 * * *
 
