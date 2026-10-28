@@ -39,7 +39,16 @@ async function fetchAsDataUrl(url) {
   }
   const mime = res.headers.get("content-type") || "audio/wav";
   const bytes = new Uint8Array(await res.arrayBuffer());
-  return dataUrlFromBytes(bytes, mime);
+  return dataUrlFromBytes(bytes, detectAudioMime(bytes, mime));
+}
+
+function detectAudioMime(bytes, fallback = "application/octet-stream") {
+  const header = String.fromCharCode(...bytes.subarray(0, 12));
+  if (header.startsWith("RIFF") && header.slice(8, 12) === "WAVE") return "audio/wav";
+  if (header.startsWith("ID3") || (bytes[0] === 0xff && (bytes[1] & 0xe0) === 0xe0)) return "audio/mpeg";
+  if (header.startsWith("OggS")) return "audio/ogg";
+  if (header.startsWith("fLaC")) return "audio/flac";
+  return fallback;
 }
 
 async function normalizeAudioResult(audio) {
@@ -50,20 +59,20 @@ async function normalizeAudioResult(audio) {
       return {
         base64: audio,
         duration: 0,
-        sample_rate: 44100
+        sample_rate: null
       };
     }
     if (audio.startsWith("http")) {
       return {
         base64: await fetchAsDataUrl(audio),
         duration: 0,
-        sample_rate: 44100
+        sample_rate: null
       };
     }
   }
 
   if (Array.isArray(audio) && audio.length >= 2) {
-    const maybeRate = Number(audio[0]) || 44100;
+    const maybeRate = Number(audio[0]) || null;
     const maybeAudio = audio[1];
 
     if (typeof maybeAudio === "string") {
@@ -90,7 +99,7 @@ async function normalizeAudioResult(audio) {
         ? audio.base64
         : `data:audio/wav;base64,${audio.base64}`,
       duration: audio.duration || 0,
-      sample_rate: audio.sample_rate || 44100
+      sample_rate: audio.sample_rate || null
     };
   }
 
@@ -98,7 +107,7 @@ async function normalizeAudioResult(audio) {
     return {
       base64: await fetchAsDataUrl(audio.url),
       duration: audio.duration || 0,
-      sample_rate: audio.sample_rate || 44100
+      sample_rate: audio.sample_rate || null
     };
   }
 
@@ -109,7 +118,7 @@ async function normalizeAudioResult(audio) {
     return {
       base64: await fetchAsDataUrl(remoteUrl),
       duration: audio.duration || 0,
-      sample_rate: audio.sample_rate || 44100
+      sample_rate: audio.sample_rate || null
     };
   }
 
@@ -120,13 +129,15 @@ let cachedClient = null;
 
 async function getClient() {
   if (!cachedClient) {
-    cachedClient = await Client.connect(HF_SPACE);
+    cachedClient = await Client.connect("https://openbmb-voxcpm-demo.hf.space");
   }
   return cachedClient;
 }
 
 async function buildReferenceInput(referenceAudio) {
   if (!referenceAudio) return null;
+  if (!(referenceAudio instanceof Blob) || !referenceAudio.size) throw new Error("请上传有效的参考音频");
+  if (referenceAudio.size > 10 * 1024 * 1024) throw new Error("参考音频不能超过 10MB");
   return handle_file(referenceAudio);
 }
 
@@ -137,15 +148,20 @@ async function runGenerate(formData) {
   const controlInstruction = String(formData.get("controlInstruction") || "");
   const cfgValue = Number(formData.get("cfgValue") || 2);
   const doNormalize = boolFrom(formData.get("doNormalize"), true);
-  const denoise = boolFrom(formData.get("denoise"), true);
+  const denoise = boolFrom(formData.get("denoise"), false);
   const referenceAudio = formData.get("referenceAudio");
+  const usePromptText = boolFrom(formData.get("usePromptText"));
+  const promptText = String(formData.get("promptText") || "").trim();
+  if (!text.trim()) throw new Error("请输入要合成的文本");
+  if (!Number.isFinite(cfgValue) || cfgValue < 1 || cfgValue > 3) throw new Error("CFG 必须在 1.0–3.0 之间");
+  if (usePromptText && (!referenceAudio || !promptText)) throw new Error("极致克隆需要参考音频和对应文本");
 
   const payload = {
     text_input: text,
-    control_instruction: controlInstruction,
+    control_instruction: usePromptText ? "" : controlInstruction,
     reference_wav_path_input: await buildReferenceInput(referenceAudio),
-    use_prompt_text: false,
-    prompt_text_input: "",
+    use_prompt_text: usePromptText,
+    prompt_text_input: usePromptText ? promptText : "",
     cfg_value_input: cfgValue,
     do_normalize: doNormalize,
     denoise: denoise
@@ -159,6 +175,20 @@ async function runGenerate(formData) {
   }
 
   return normalizeAudioResult(audio);
+}
+
+async function runTranscribe(formData) {
+  const referenceAudio = formData.get("referenceAudio");
+  if (!referenceAudio) throw new Error("请先上传参考音频");
+  const client = await getClient();
+  const result = await client.predict("/_run_asr_if_needed", {
+    checked: true,
+    audio_path: await buildReferenceInput(referenceAudio)
+  });
+  const output = result?.data?.[0];
+  const transcript = typeof output === "string" ? output : output?.value;
+  if (!transcript?.trim()) throw new Error("未识别到参考文本，请手动填写");
+  return transcript.trim();
 }
 
 export default {
@@ -178,7 +208,8 @@ export default {
         return json({
           ok: true,
           relay: "cloudflare-worker",
-          space: HF_SPACE
+          space: HF_SPACE,
+          capabilities: { hifi: true, transcribe: true }
         });
       } catch (error) {
         return json(
@@ -193,9 +224,12 @@ export default {
       }
     }
 
-    if (url.pathname === "/api/generate" && request.method === "POST") {
+    if (["/api/generate", "/api/transcribe"].includes(url.pathname) && request.method === "POST") {
       try {
         const formData = await request.formData();
+        if (url.pathname === "/api/transcribe") {
+          return json({ ok: true, transcript: await runTranscribe(formData) });
+        }
         const normalized = await runGenerate(formData);
 
         return json({

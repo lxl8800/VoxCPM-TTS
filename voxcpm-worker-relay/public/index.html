@@ -597,7 +597,10 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
         <div class="rc">
           <div class="rh">
             <span class="rt">✓ 合成完成</span>
-            <a class="dl" id="downloadBtn" href="#" download="voxcpm.wav">⬇ 下载 WAV</a>
+            <div class="action-row">
+              <button class="dl" id="downloadOriginalBtn" type="button">⬇ 下载原文件</button>
+              <button class="dl" id="downloadBtn" type="button">⬇ 下载 WAV</button>
+            </div>
           </div>
           <div class="pl">
             <button class="pb" id="playBtn">▶</button>
@@ -608,7 +611,7 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
           </div>
           <audio id="audioPlayer" style="display:none"></audio>
           <div class="ui" id="audioInfo" style="display:none">
-            <span>采样率 <b class="uv" id="sampleRate">44100</b>Hz</span>
+            <span>采样率 <b class="uv" id="sampleRate">—</b>Hz</span>
             <span>时长 <b class="uv" id="duration">-</b>s</span>
           </div>
         </div>
@@ -647,7 +650,7 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
               <input type="file" id="refAudio" accept="audio/*">
               <div class="upload-icon">📁</div>
               <div class="upload-text">点击或拖拽上传音频文件</div>
-              <div class="upload-hint">支持 WAV/MP3/M4A/FLAC · 建议 5-10 秒 · ≤10MB · 干净人声效果最佳</div>
+              <div class="upload-hint">支持 WAV/MP3/M4A/FLAC · 建议 5–30 秒，最长 50 秒 · ≤10MB · 干净人声效果最佳</div>
             </label>
             <div class="upload-preview" id="uploadPreview">
               <div class="preview-name" id="previewName"></div>
@@ -686,6 +689,15 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
             <button id="registerBtn" style="width:100%;margin-top:12px;padding:10px;background:var(--gn);border:none;border-radius:var(--r2);color:white;font-weight:500;cursor:pointer;font-size:.9rem">✨ 注册人物（保存入库）</button>
           </div>
 
+          <div class="sl">🎙️ 克隆模式与参考文本</div>
+          <label style="font-size:.78rem;color:var(--t2)"><input type="checkbox" id="usePromptText"> 极致克隆（参考音频＋准确文本）</label>
+          <p class="tip" style="font-size:.74rem;line-height:1.7;color:var(--t2);margin:8px 0">普通克隆可调情绪和语速；极致克隆优先还原参考音频的表达，开启后不使用控制指令。批量生成时沿用此模式，并读取各人物保存的参考文本。</p>
+          <textarea class="ta" id="promptText" rows="3" style="min-height:80px" placeholder="参考音频中实际说出的原文，可自动识别后校对；新人物注册时一并保存"></textarea>
+          <div class="action-row" style="margin:8px 0 14px">
+            <button class="ghost-btn" id="transcribeBtn" type="button">识别参考文本</button>
+            <button class="ghost-btn" id="saveTranscriptBtn" type="button">保存到当前人物</button>
+          </div>
+
           <!-- 人物列表 -->
           <div class="voice-toolbar">
             <div class="sl" style="margin:0">已注册人物</div>
@@ -717,8 +729,8 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
         <div class="pnl-b">
           <div class="cg">
             <div class="cl">CFG 系数 <span class="v" id="cfgValue">2.0</span></div>
-            <input type="range" id="cfgSlider" min="0.5" max="3.0" step="0.1" value="2.0">
-            <div style="font-size:.7rem;color:var(--t3);margin-top:4px">官方推荐 1.5~2.5 · 越高越贴合参考音频</div>
+            <input type="range" id="cfgSlider" min="1.0" max="3.0" step="0.1" value="2.0">
+            <div style="font-size:.7rem;color:var(--t3);margin-top:4px">范围 1.0–3.0，默认 2.0 · 较高值约束更强，也可能增加杂音</div>
           </div>
           <div class="sep"></div>
           <div class="cg">
@@ -728,9 +740,12 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
           </div>
           <div class="cg">
             <label style="display:flex;align-items:center;gap:7px;font-size:.78rem;color:var(--t2);cursor:pointer">
-              <input type="checkbox" id="denoise" checked> 🔇 参考音频降噪（提升克隆质量）
+              <input type="checkbox" id="denoise"> 🔇 参考音频降噪（有噪声时开启）
             </label>
           </div>
+          <p class="tip" style="font-size:.74rem;line-height:1.7;color:var(--t2);margin:8px 0">干净录音通常无需降噪，降噪可能改变音色。CFG 默认 2.0；长文出现噪声时可尝试 1.5–1.6。</p>
+          <label style="font-size:.78rem;color:var(--t2)"><input type="checkbox" id="splitLongText" checked> 长文自动分段并合并为 WAV</label>
+          <p class="tip" style="font-size:.74rem;line-height:1.7;color:var(--t2);margin:8px 0">按标点分段，每段最多约 200 字，按顺序生成；复用同一参考音频。无参考音频时，以首段生成的人声作为后续参考，尽量保持音色一致。历史与批量下载会转换为 WAV。</p>
           <div class="sep"></div>
           <div id="requestDesktopMount">
             <div class="sl">📡 生成说明（本次请求）</div>
@@ -821,6 +836,16 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
 
       <div class="guide-grid">
         <article class="guide-card">
+          <h3>极致克隆与人物参考文本</h3>
+          <p>上传或选择人物音频后，点击“识别参考文本”，校对实际说出的每一个字。新人物注册时会一起保存文本；已有的人物点击“保存到当前人物”。</p>
+          <p>开启“极致克隆”后，模型沿用参考音频的表达，控制指令不参与生成。批量对白沿用同一模式，每个角色使用自己保存的参考文本；缺少文本时会提示失败。</p>
+        </article>
+        <article class="guide-card">
+          <h3>长文与音频下载</h3>
+          <p>长文默认按标点分段、顺序生成，合并为 48kHz WAV。固定人物时复用同一参考音频；没有参考时，以首段人声作为后续参考，仍建议试听确认音色。</p>
+          <p>“下载原文件”保留服务实际返回的格式。“下载 WAV”会转换为 PCM WAV；历史记录和批量下载也会执行转换，采样率与时长从实际文件读取。</p>
+        </article>
+        <article class="guide-card">
           <h3>生成说明（中文翻译版）</h3>
           <p>没有参考音频时，也可以直接靠文字描述生成声音。官方建议把身份、声音质感、情绪和场景合并进一条完整的 Control Instruction。</p>
           <ul>
@@ -889,15 +914,15 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.25)}
 // 留空则表示不内置，优先使用 URL 参数 ?relay=... 或同源 /api/status。
 const BUILTIN_RELAY_BASE = "https://voxcpm2.898800.xyz";
 window.VOXCPM_RELAY_BASE = window.VOXCPM_RELAY_BASE || BUILTIN_RELAY_BASE;
-import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/+esm";
+import { Client, handle_file } from "https://cdn.jsdelivr.net/npm/@gradio/client@2.7.1/+esm";
 const $ = id => document.getElementById(id);
 const S = { 
   voices: [], selectedVoice: null, client: null, generatedBlob: null, history: [],
   mediaRecorder: null, audioChunks: [], isRecording: false, recordedBlob: null,
   uploadedFile: null, hasTempAudio: false, playingVoice: null,
   batchItems: [], batchGenerating: false,
-  useRelay: false, relayBase: '',
-  bootChecking: false
+  useRelay: false, relayBase: '', relayCapabilities: {},
+  bootChecking: false, generating: false, currentResult: null, referenceRevision: 0
 };
 const DIRECT_PROBE_TIMEOUT_MS = 12000;
 const RELAY_PROBE_TIMEOUT_MS = 8000;
@@ -924,6 +949,9 @@ const els = {
   batchList: $('batchList'), batchSelectAll: $('batchSelectAll'),
   downloadBatchBtn: $('downloadBatchBtn'),
   cfgSlider: $('cfgSlider'), cfgValue: $('cfgValue'),
+  usePromptText: $('usePromptText'), promptText: $('promptText'),
+  transcribeBtn: $('transcribeBtn'), saveTranscriptBtn: $('saveTranscriptBtn'),
+  splitLongText: $('splitLongText'), downloadOriginalBtn: $('downloadOriginalBtn'),
   doNormalize: $('doNormalize'), denoise: $('denoise'),
   generateBtn: $('generateBtn'), applyCtrl: $('applyCtrl'),
   resultArea: $('resultArea'), audioPlayer: $('audioPlayer'),
@@ -967,8 +995,9 @@ const idb = {
     return new Promise((res, rej) => {
       const tx = conn.transaction(STORE, 'readwrite');
       const req = tx.objectStore(STORE).put(voice);
-      req.onsuccess = () => res(req.result);
-      req.onerror = () => rej(req.error);
+      tx.oncomplete = () => res(req.result);
+      tx.onerror = () => rej(tx.error);
+      tx.onabort = () => rej(tx.error || new Error('本地人物保存已中止'));
     });
   },
   async getAll() {
@@ -1205,6 +1234,7 @@ async function probeRelayAccess(base = '') {
       if (!data?.ok) continue;
       S.useRelay = true;
       S.relayBase = relayBase;
+      S.relayCapabilities = data.capabilities || {};
       setServiceStatus('ok', `已切换海外中转 · ${relayBase}`);
       return true;
     } catch (_) {}
@@ -1215,7 +1245,7 @@ async function probeDirectAccess() {
   try {
     setServiceStatus('checking', `正在尝试直连 HuggingFace：openbmb/VoxCPM-Demo（最多等待 ${DIRECT_PROBE_TIMEOUT_MS / 1000} 秒）`);
     const client = await Promise.race([
-      Client.connect("openbmb/VoxCPM-Demo"),
+      Client.connect("https://openbmb-voxcpm-demo.hf.space"),
       timeoutAfter(DIRECT_PROBE_TIMEOUT_MS, 'direct')
     ]);
     S.client = client;
@@ -1271,10 +1301,10 @@ function buildCurlPreview() {
     '    <span class="json-key">"mode"</span>: ' + formatCurlValue(mode) + ',',
     '    <span class="json-key">"data"</span>: {',
     '      <span class="json-key">"text_input"</span>: ' + formatCurlValue(els.targetText.value) + ',',
-    '      <span class="json-key">"control_instruction"</span>: ' + formatCurlValue(els.controlInstruction.value.trim()) + ',',
+    '      <span class="json-key">"control_instruction"</span>: ' + formatCurlValue(els.usePromptText.checked ? '' : els.controlInstruction.value.trim()) + ',',
     '      <span class="json-key">"reference_wav_path_input"</span>: ' + getReferencePreviewLabel() + ',',
-    '      <span class="json-key">"use_prompt_text"</span>: <span class="curl-bool">false</span>,',
-    '      <span class="json-key">"prompt_text_input"</span>: <span class="curl-str">""</span>,',
+    '      <span class="json-key">"use_prompt_text"</span>: ' + formatCurlValue(els.usePromptText.checked) + ',',
+    '      <span class="json-key">"prompt_text_input"</span>: ' + formatCurlValue(els.usePromptText.checked ? els.promptText.value.trim() : '') + ',',
     '      <span class="json-key">"cfg_value_input"</span>: ' + formatCurlValue(parseFloat(els.cfgSlider.value)) + ',',
     '      <span class="json-key">"do_normalize"</span>: ' + formatCurlValue(!!els.doNormalize.checked) + ',',
     '      <span class="json-key">"denoise"</span>: ' + formatCurlValue(!!els.denoise.checked),
@@ -1355,9 +1385,132 @@ async function convertBlobToWavFile(blob, fallbackName = `recorded_${Date.now()}
     if (audioCtx.state !== 'closed') await audioCtx.close();
   }
 }
+
+function getReferenceBlob() {
+  if (S.selectedVoice) return new Blob([S.selectedVoice.audio], { type: S.selectedVoice.type || 'audio/webm' });
+  return S.recordedBlob || S.uploadedFile || null;
+}
+function resetReferenceText(text = '') {
+  S.referenceRevision++;
+  els.promptText.value = text;
+}
+function getGenerationOptions() {
+  return {
+    usePromptText: els.usePromptText.checked,
+    promptText: els.promptText.value.trim(),
+    cfgValue: Number(els.cfgSlider.value),
+    doNormalize: els.doNormalize.checked,
+    denoise: els.denoise.checked,
+    splitLongText: els.splitLongText.checked
+  };
+}
+function readAudioHeader(bytes) {
+  const str = (offset, count) => String.fromCharCode(...bytes.subarray(offset, offset + count));
+  if (bytes.length >= 12 && str(0, 4) === 'RIFF' && str(8, 4) === 'WAVE') {
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    for (let offset = 12; offset + 8 <= bytes.length;) {
+      const size = view.getUint32(offset + 4, true);
+      if (str(offset, 4) === 'fmt ' && size >= 16 && offset + 24 <= bytes.length) {
+        return { mime: 'audio/wav', extension: 'wav', sampleRate: view.getUint32(offset + 12, true) };
+      }
+      offset += 8 + size + (size % 2);
+    }
+  }
+  let start = 0;
+  if (str(0, 3) === 'ID3' && bytes.length >= 10) {
+    start = 10 + ((bytes[6] & 127) * 2097152 + (bytes[7] & 127) * 16384 + (bytes[8] & 127) * 128 + (bytes[9] & 127));
+    if (bytes[5] & 16) start += 10;
+  }
+  for (let offset = start; offset + 4 <= Math.min(bytes.length, start + 65536); offset++) {
+    if (bytes[offset] !== 255 || (bytes[offset + 1] & 224) !== 224) continue;
+    const version = (bytes[offset + 1] >> 3) & 3;
+    const layer = (bytes[offset + 1] >> 1) & 3;
+    const rateIndex = (bytes[offset + 2] >> 2) & 3;
+    const bitRateIndex = bytes[offset + 2] >> 4;
+    if (version === 1 || !layer || rateIndex === 3 || bitRateIndex === 0 || bitRateIndex === 15) continue;
+    return { mime: 'audio/mpeg', extension: 'mp3', sampleRate: [44100, 48000, 32000][rateIndex] / (version === 3 ? 1 : version === 2 ? 2 : 4) };
+  }
+  if (str(0, 4) === 'fLaC' && bytes.length >= 22) {
+    return { mime: 'audio/flac', extension: 'flac', sampleRate: bytes[18] * 4096 + bytes[19] * 16 + (bytes[20] >> 4) };
+  }
+  if (str(0, 4) === 'OggS') return { mime: 'audio/ogg', extension: 'ogg', sampleRate: null };
+  return { mime: '', extension: 'bin', sampleRate: null };
+}
+async function decodeAudioBlob(blob, fallbackRate = null) {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  const info = readAudioHeader(bytes);
+  // decodeAudioData resamples to the context rate; read the encoded rate first.
+  const context = new OfflineAudioContext(2, 1, info.sampleRate || fallbackRate || 48000);
+  const buffer = await context.decodeAudioData(bytes.buffer.slice(0));
+  return { buffer, info };
+}
+async function validateReferenceAudio(blob) {
+  if (!blob || !blob.size) throw new Error('请先上传或录制参考音频');
+  if (blob.size > 10 * 1024 * 1024) throw new Error('参考音频不能超过 10MB');
+  const { buffer } = await decodeAudioBlob(blob);
+  if (!Number.isFinite(buffer.duration) || buffer.duration <= 0) throw new Error('无法读取有效的参考音频');
+  if (buffer.duration > 50) throw new Error('参考音频最长 50 秒，请先裁剪；建议使用 5–30 秒干净人声');
+  return buffer.duration;
+}
+function referenceFile(blob) {
+  const ext = ({ 'audio/wav': 'wav', 'audio/x-wav': 'wav', 'audio/mpeg': 'mp3', 'audio/flac': 'flac', 'audio/mp4': 'm4a', 'audio/ogg': 'ogg' })[blob.type] || 'webm';
+  return toAudioFile(blob, `reference.${ext}`);
+}
+async function transcribeReference() {
+  const blob = getReferenceBlob();
+  const revision = S.referenceRevision;
+  const originalText = els.promptText.value;
+  els.transcribeBtn.disabled = true;
+  try {
+    await validateReferenceAudio(blob);
+    if (!(await connect())) return;
+    let transcript;
+    if (S.useRelay) {
+      if (!S.relayCapabilities.transcribe) throw new Error('当前中转版本不支持转写，请部署新版 Worker，或手动填写参考文本');
+      const form = new FormData();
+      form.append('referenceAudio', referenceFile(blob));
+      const response = await fetch(`${S.relayBase}/api/transcribe`, { method: 'POST', body: form });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || '转写失败，请手动填写；中转需部署最新版本');
+      transcript = data.transcript;
+    } else {
+      const result = await S.client.predict('/_run_asr_if_needed', { checked: true, audio_path: handle_file(referenceFile(blob)) });
+      const output = result.data?.[0];
+      transcript = typeof output === 'string' ? output : output?.value;
+    }
+    if (!transcript?.trim()) throw new Error('未识别到文本，请手动填写');
+    if (revision !== S.referenceRevision || originalText !== els.promptText.value) return toast('参考音频或文本已变化，请重新识别', '');
+    els.promptText.value = transcript.trim();
+    updatePreview();
+    toast('识别完成，请校对参考文本后保存', 'ok');
+  } catch (error) {
+    toast(`识别失败：${error.message}`, 'er');
+  } finally {
+    els.transcribeBtn.disabled = false;
+  }
+}
+els.transcribeBtn.addEventListener('click', transcribeReference);
+els.saveTranscriptBtn.addEventListener('click', async () => {
+  if (!S.selectedVoice) return toast('请先选择已保存的人物；新人物请点击注册保存', '');
+  try {
+    const voice = { ...S.selectedVoice, promptText: els.promptText.value.trim() };
+    await idb.put(voice);
+    S.selectedVoice = voice;
+    await renderVoices();
+    toast('参考文本已保存到人物库', 'ok');
+  } catch (error) { toast(`保存失败：${error.message}`, 'er'); }
+});
+els.usePromptText.addEventListener('change', () => {
+  els.controlInstruction.disabled = els.usePromptText.checked;
+  updatePreview();
+});
+els.promptText.addEventListener('input', updatePreview);
+els.doNormalize.addEventListener('change', updatePreview);
+els.denoise.addEventListener('change', updatePreview);
 function clearVoiceSelection() {
   if (S.selectedVoice) {
     S.selectedVoice = null;
+    resetReferenceText();
     updateVoiceStatus();
     updatePreview();
     renderVoices();
@@ -1566,6 +1719,10 @@ async function triggerNamedDownload({ url, filename, blob = null }) {
     fileBlob = await res.blob();
   }
   if (!fileBlob) throw new Error('没有可下载的音频数据');
+  if (filename.toLowerCase().endsWith('.wav') && fileBlob.type !== 'audio/wav') {
+    const { buffer } = await decodeAudioBlob(fileBlob);
+    fileBlob = audioBufferToWavBlob(buffer);
+  }
   const blobUrl = URL.createObjectURL(fileBlob);
   const a = document.createElement('a');
   a.href = blobUrl;
@@ -1627,7 +1784,7 @@ function renderBatchItems() {
             <div class="batch-header">
               <div class="batch-role-row">
                 <div class="batch-role">${escapeHtml(item.role)}</div>
-                <select class="sel batch-voice-select" data-batch-voice="${idx}" style="font-size:.74rem">
+                <select class="sel batch-voice-select" data-batch-voice="${idx}" style="font-size:.74rem" ${S.batchGenerating ? 'disabled' : ''}>
                   <option value="">手动选择人物声音</option>
                   ${S.voices.map(v => `<option value="${escapeHtml(v.key)}" ${item.voice?.key === v.key ? 'selected' : ''}>${escapeHtml(v.name)}</option>`).join('')}
                 </select>
@@ -1700,7 +1857,7 @@ function renderHistory() {
       <button class="hp" data-i="${i}">▶</button>
       <div class="hf">
         <div class="ht">${escapeHtml(it.text)}</div>
-        <div class="hm">${it.mode} · ${it.time}</div>
+        <div class="hm">${escapeHtml(it.mode)} · ${it.time}</div>
       </div>
     </div>
   `).join('');
@@ -1718,8 +1875,8 @@ function renderHistory() {
       e.stopPropagation();
       const i = +el.dataset.i, it = S.history[i];
       if (!it) return;
-      els.audioPlayer.src = it.url; els.audioPlayer.play();
-      els.resultArea.classList.add('vis'); els.downloadBtn.href = it.url;
+      showAudioResult(it.result);
+      els.audioPlayer.play();
     });
   });
   updateHistoryActions();
@@ -1769,7 +1926,7 @@ els.historyDownloadBtn.addEventListener('click', async () => {
     try {
       await triggerNamedDownload({
         url: it.url,
-        filename: buildWorkbenchFilename(it.text, it.createdAt ? new Date(it.createdAt) : new Date()),
+        filename: it.result?.filename || buildWorkbenchFilename(it.text, it.createdAt ? new Date(it.createdAt) : new Date()),
         blob: it.blob || null
       });
     } catch (err) {
@@ -1822,12 +1979,14 @@ els.charCount.textContent = els.targetText.value.length;
 
 // 更新风格预览
 function updatePreview() {
-  const ctrl = els.controlInstruction.value.trim();
+  const ctrl = els.usePromptText.checked ? '' : els.controlInstruction.value.trim();
+  els.controlInstruction.disabled = els.usePromptText.checked;
+  els.applyCtrl.disabled = els.usePromptText.checked;
   if (ctrl) {
     const tags = ctrl.split(/[\s,，]+/).filter(Boolean).slice(0, 8);
     els.stylePreview.innerHTML = tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join(' ');
   } else {
-    els.stylePreview.innerHTML = '<span style="color:var(--t3)">（默认，无额外风格修饰）</span>';
+    els.stylePreview.innerHTML = `<span style="color:var(--t3)">${els.usePromptText.checked ? '极致克隆：沿用参考表达，控制指令不参与生成' : '（默认，无额外风格修饰）'}</span>`;
   }
   els.requestPreview.innerHTML = buildCurlPreview();
 }
@@ -1874,28 +2033,30 @@ document.querySelectorAll('.sb').forEach(btn => {
 });
 
 // 文件上传功能
-function handleFileSelect(file) {
+async function handleFileSelect(file) {
   if (!file) return;
   if (!file.type.startsWith('audio/')) return toast('❌ 请选择音频文件', 'er');
   if (file.size > 10 * 1024 * 1024) return toast('❌ 音频不能超过 10MB', 'er');
+  const revision = ++S.referenceRevision;
+  let duration;
+  try { duration = await validateReferenceAudio(file); }
+  catch (error) { if (revision === S.referenceRevision) toast(error.message, 'er'); return; }
+  if (revision !== S.referenceRevision) return;
   
+  S.selectedVoice = null;
+  resetReferenceText();
   S.recordedBlob = null; els.recPreview.classList.remove('show');
   S.uploadedFile = file;
   
   els.previewName.textContent = file.name;
   els.previewSize.textContent = formatFileSize(file.size);
   
-  const audio = new Audio();
-  audio.src = URL.createObjectURL(file);
-  audio.onloadedmetadata = () => {
-    const dur = audio.duration;
-    els.previewDuration.textContent = fmt(dur);
-    if (dur < 5) toast('⚠️ 参考音频建议 ≥5 秒，效果更佳', '');
-    URL.revokeObjectURL(audio.src);
-  };
+  els.previewDuration.textContent = fmt(duration);
+  if (duration < 5) toast('⚠️ 参考音频建议 ≥5 秒，效果更佳', '');
   
   els.uploadPreview.classList.add('show');
   updateTempAudioStatus();
+  renderVoices();
   updatePreview();
   toast('✅ 文件已选择，可直接生成', 'ok');
 }
@@ -1920,6 +2081,7 @@ els.refAudio.addEventListener('change', e => handleFileSelect(e.target.files[0])
 els.previewRemove.addEventListener('click', e => {
   e.stopPropagation();
   S.uploadedFile = null;
+  resetReferenceText(S.selectedVoice?.promptText || '');
   els.refAudio.value = '';
   els.uploadPreview.classList.remove('show');
   updateTempAudioStatus();
@@ -1954,6 +2116,7 @@ function updateWaveform(data) {
 }
 
 async function startRecording() {
+  if (S.generating || S.batchGenerating) return;
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: { 
       echoCancellation: true, noiseSuppression: true, sampleRate: 44100 
@@ -1967,6 +2130,7 @@ async function startRecording() {
       try {
         const rawRecording = new Blob(S.audioChunks, { type: 'audio/webm' });
         S.recordedBlob = await convertBlobToWavFile(rawRecording, `recorded_${Date.now()}.wav`);
+        await validateReferenceAudio(S.recordedBlob);
         const url = URL.createObjectURL(S.recordedBlob);
         els.recAudio.src = url;
         els.recPreview.classList.add('show');
@@ -2010,7 +2174,10 @@ async function startRecording() {
     S.isRecording = true;
     recStartTime = Date.now();
     
-    S.uploadedFile = null; els.refAudio.value = ''; els.uploadPreview.classList.remove('show');
+    S.uploadedFile = null; S.recordedBlob = null; els.refAudio.value = ''; els.uploadPreview.classList.remove('show');
+    S.selectedVoice = null;
+    resetReferenceText();
+    renderVoices();
     updateTempAudioStatus();
     
     els.recBtn.classList.add('recording');
@@ -2053,6 +2220,7 @@ els.recBtn.addEventListener('click', () => {
 els.recRetake.addEventListener('click', () => {
   els.recPreview.classList.remove('show');
   S.recordedBlob = null;
+  resetReferenceText();
   updateTempAudioStatus();
   updatePreview();
   if (!S.isRecording) startRecording();
@@ -2157,12 +2325,13 @@ async function playVoicePreview(key) {
 
 function selectVoice(key) {
   S.selectedVoice = S.voices.find(v => v.key === key);
+  resetReferenceText(S.selectedVoice?.promptText || '');
   S.uploadedFile = null; S.recordedBlob = null;
   els.uploadPreview.classList.remove('show'); els.recPreview.classList.remove('show');
   updateTempAudioStatus();
   updateVoiceStatus();
   renderVoices(); updatePreview();
-  toast(`✅ 已选择人物：${S.selectedVoice.name}${els.controlInstruction.value.trim() ? '，会叠加当前控制指令' : ''}`, 'ok');
+  toast(`✅ 已选择人物：${S.selectedVoice.name}${els.usePromptText.checked ? '，使用极致克隆' : els.controlInstruction.value.trim() ? '，会叠加当前控制指令' : ''}`, 'ok');
 }
 
 async function deleteVoice(key) {
@@ -2179,7 +2348,7 @@ async function deleteVoice(key) {
   });
   if (!confirmed) return;
   await idb.delete(key);
-  if (S.selectedVoice?.key === key) S.selectedVoice = null;
+  if (S.selectedVoice?.key === key) { S.selectedVoice = null; resetReferenceText(); }
   await renderVoices();
   toast('🗑️ 已删除', 'ok');
 }
@@ -2194,6 +2363,7 @@ els.registerBtn.addEventListener('click', async () => {
   if (audioSource.size > 10 * 1024 * 1024) return toast('❌ 音频不能超过 10MB', 'er');
 
   try {
+    await validateReferenceAudio(audioSource);
     toast('⏳ 生成人物 Key 中...', '');
     const hash = await computeHash(audioSource);
     const key = makeKey(name, hash);
@@ -2208,6 +2378,7 @@ els.registerBtn.addEventListener('click', async () => {
       key, name, hash, 
       audio: arrayBuffer,
       type: fileType, 
+      promptText: els.promptText.value.trim(),
       createdAt: Date.now() 
     });
     
@@ -2246,7 +2417,7 @@ async function connect() {
     }
 
     toast('🔌 连接 VoxCPM 服务中.', '');
-    S.client = await Client.connect("openbmb/VoxCPM-Demo");
+    S.client = await Client.connect("https://openbmb-voxcpm-demo.hf.space");
     setServiceStatus('ok', '已直连 HuggingFace · openbmb/VoxCPM-Demo');
     log('✅ 连接成功', 'rs');
     return true;
@@ -2268,16 +2439,20 @@ async function connect() {
     return false;
   }
 }
-async function synthesizeAudio({ text, controlInstruction = '', referenceBlob = null }) {
+async function synthesizeSegment({ text, controlInstruction = '', referenceBlob = null, options }) {
+  let audio;
+  let blob;
   if (S.useRelay) {
     const formData = new FormData();
     formData.append('text', text);
     formData.append('controlInstruction', controlInstruction);
-    formData.append('cfgValue', String(parseFloat(els.cfgSlider.value)));
-    formData.append('doNormalize', String(els.doNormalize.checked));
-    formData.append('denoise', String(els.denoise.checked));
+    formData.append('cfgValue', String(options.cfgValue));
+    formData.append('doNormalize', String(options.doNormalize));
+    formData.append('denoise', String(options.denoise));
+    formData.append('usePromptText', String(options.usePromptText));
+    formData.append('promptText', options.usePromptText ? options.promptText : '');
     if (referenceBlob) {
-      formData.append('referenceAudio', referenceBlob, referenceBlob.name || 'reference.wav');
+      formData.append('referenceAudio', referenceFile(referenceBlob));
     }
     const res = await fetch(`${S.relayBase}/api/generate`, {
       method: 'POST',
@@ -2287,56 +2462,129 @@ async function synthesizeAudio({ text, controlInstruction = '', referenceBlob = 
       const message = await res.text();
       throw new Error(message || `中转请求失败：${res.status}`);
     }
-    const data = await res.json();
-    if (!data?.base64) throw new Error(data?.error || '中转返回数据异常');
-    const blob = dataUrlToBlob(data.base64);
-    const url = URL.createObjectURL(blob);
-    return { url, blob, audio: data };
+    audio = await res.json();
+    if (!audio?.base64) throw new Error(audio?.error || '中转返回数据异常');
+    blob = dataUrlToBlob(audio.base64);
+  } else {
+    const result = await S.client.predict("/generate", {
+      text_input: text,
+      control_instruction: controlInstruction,
+      reference_wav_path_input: referenceBlob ? handle_file(referenceFile(referenceBlob)) : null,
+      use_prompt_text: options.usePromptText,
+      prompt_text_input: options.usePromptText ? options.promptText : '',
+      cfg_value_input: options.cfgValue,
+      do_normalize: options.doNormalize, denoise: options.denoise
+    });
+    audio = result.data?.[0];
+    if (!audio) throw new Error('返回数据异常');
+    if (audio instanceof Blob) blob = audio;
+    else if (audio.base64) blob = dataUrlToBlob(audio.base64.startsWith('data:') ? audio.base64 : `data:application/octet-stream;base64,${audio.base64}`);
+    else {
+      const remoteUrl = typeof audio === 'string' ? audio : audio.url || (audio.path?.startsWith('http') ? audio.path : audio.path ? `https://openbmb-voxcpm-demo.hf.space/gradio_api/file=${audio.path}` : null);
+      if (!remoteUrl) throw new Error('无法解析音频地址');
+      const response = await fetch(remoteUrl);
+      if (!response.ok) throw new Error(`拉取音频失败：${response.status}`);
+      blob = await response.blob();
+    }
   }
-  const result = await S.client.predict("/generate", {
-    text_input: text,
-    control_instruction: controlInstruction,
-    reference_wav_path_input: referenceBlob,
-    use_prompt_text: false, prompt_text_input: "",
-    cfg_value_input: parseFloat(els.cfgSlider.value),
-    do_normalize: els.doNormalize.checked, denoise: els.denoise.checked
+  const { buffer, info } = await decodeAudioBlob(blob, audio.sample_rate);
+  // Keep the encoded bytes for original download; WAV is encoded separately.
+  blob = new Blob([blob], { type: info.mime || blob.type });
+  return { blob, buffer, extension: info.extension, audio: { sample_rate: info.sampleRate || audio.sample_rate || null, duration: buffer.duration } };
+}
+function splitSpeechText(text, maxLength = 200) {
+  const units = text.match(/\[[^\]\r\n]+\]|[\s\S]/gu) || [];
+  const segments = [];
+  let part = [], length = 0;
+  for (const unit of units) {
+    const size = Array.from(unit).length;
+    if (length + size > maxLength && part.length) {
+      let boundary = -1;
+      for (let i = part.length - 1; i >= 0; i--) {
+        if (/[。！？.!?；;，,\n]/u.test(part[i]) && !part[i].startsWith('[')) { boundary = i; break; }
+      }
+      if (boundary >= Math.floor(part.length / 2)) {
+        segments.push(part.slice(0, boundary + 1).join(''));
+        part = part.slice(boundary + 1);
+      } else { segments.push(part.join('')); part = []; }
+      length = Array.from(part.join('')).length;
+    }
+    part.push(unit); length += size;
+  }
+  if (part.length) segments.push(part.join(''));
+  return segments.filter(segment => segment.trim());
+}
+async function mergeAudioBuffers(buffers) {
+  const rate = 48000;
+  const channels = Math.max(...buffers.map(buffer => buffer.numberOfChannels));
+  const lengths = buffers.map(buffer => Math.ceil(buffer.duration * rate));
+  const context = new OfflineAudioContext(channels, lengths.reduce((a, b) => a + b, 0), rate);
+  let offset = 0;
+  buffers.forEach((buffer, index) => {
+    const source = context.createBufferSource();
+    source.buffer = buffer;
+    source.connect(context.destination);
+    source.start(offset / rate);
+    offset += lengths[index];
   });
-
-  const audio = result.data?.[0];
-  if (!audio) throw new Error('返回数据异常');
-
-  let url = null;
-  let blob = null;
-  if (audio.url) url = audio.url;
-  else if (audio.base64) {
-    const b64 = audio.base64.split(',')[1] || audio.base64;
-    const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-    blob = new Blob([bytes], { type: 'audio/wav' });
-    url = URL.createObjectURL(blob);
-  } else if (audio instanceof Blob) {
-    blob = audio;
-    url = URL.createObjectURL(audio);
-  } else if (audio.path) {
-    url = audio.path.startsWith('http') ? audio.path : `https://openbmb-voxcpm-demo.hf.space${audio.path}`;
+  return context.startRendering();
+}
+async function synthesizeAudio({ text, controlInstruction = '', referenceBlob = null, options = getGenerationOptions() }) {
+  if (S.useRelay && options.usePromptText && !S.relayCapabilities.hifi) throw new Error('当前中转版本不支持极致克隆，请部署新版 Worker，或切回普通克隆');
+  if (referenceBlob) await validateReferenceAudio(referenceBlob);
+  if (options.usePromptText && (!referenceBlob || !options.promptText.trim())) throw new Error('极致克隆需要参考音频及对应的准确文本，请识别或填写后再生成');
+  if (options.usePromptText) controlInstruction = '';
+  const segments = options.splitLongText ? splitSpeechText(text) : [text];
+  const parts = [];
+  for (let index = 0; index < segments.length; index++) {
+    if (segments.length > 1) log(`长文分段：正在生成 ${index + 1}/${segments.length}`, 'nf');
+    try {
+      const result = await synthesizeSegment({ text: segments[index], controlInstruction, referenceBlob, options });
+      parts.push(result);
+      if (!referenceBlob && segments.length > 1) {
+        const source = result.buffer;
+        const frames = Math.min(source.length, source.sampleRate * 15);
+        const reference = new AudioBuffer({ length: frames, numberOfChannels: source.numberOfChannels, sampleRate: source.sampleRate });
+        for (let channel = 0; channel < source.numberOfChannels; channel++) reference.copyToChannel(source.getChannelData(channel).subarray(0, frames), channel);
+        referenceBlob = audioBufferToWavBlob(reference);
+      }
+    } catch (error) { throw new Error(`第 ${index + 1}/${segments.length} 段生成失败：${error.message}`); }
   }
-  if (!url) throw new Error('无法解析音频');
-  return { url, blob, audio };
+  let result = parts[0];
+  if (parts.length > 1) {
+    const buffer = await mergeAudioBuffers(parts.map(part => part.buffer));
+    result = { blob: audioBufferToWavBlob(buffer), extension: 'wav', audio: { sample_rate: buffer.sampleRate, duration: buffer.duration } };
+  }
+  const { buffer, ...output } = result;
+  return { ...output, url: URL.createObjectURL(result.blob) };
+}
+function showAudioResult(result) {
+  if (!result) return;
+  S.currentResult = result;
+  S.generatedBlob = result.blob;
+  els.audioPlayer.src = result.url;
+  els.audioPlayer.load();
+  els.sampleRate.textContent = result.audio.sample_rate || '未知';
+  els.duration.textContent = result.audio.duration.toFixed(1);
+  els.downloadOriginalBtn.textContent = `⬇ 下载 ${result.extension.toUpperCase()}`;
+  els.resultArea.classList.add('vis');
+  els.audioInfo.style.display = 'flex';
 }
 
 // 生成语音
 async function generate() {
+  if (S.generating || S.batchGenerating || S.isRecording) return;
   const text = els.targetText.value.trim();
   if (!text) return toast('❌ 请输入目标文本', 'er');
-  if (!S.client && !(await connect())) return;
   
   const hasVoice = !!S.selectedVoice;
   const hasControl = !!els.controlInstruction.value.trim();
   const hasTemp = !!S.recordedBlob || !!S.uploadedFile;
   
-  if (!hasVoice && !hasControl && !hasTemp) {
-    return toast('❌ 请选择人物、填写控制指令 或 上传/录制音频', 'er');
-  }
-
+  const options = getGenerationOptions();
+  const controlInstruction = els.controlInstruction.value.trim();
+  const refBlob = getReferenceBlob();
+  S.generating = true;
   els.generateBtn.classList.add('ld'); els.generateBtn.disabled = true;
   
   let modeText = '';
@@ -2344,33 +2592,25 @@ async function generate() {
   else if (hasVoice) modeText = `🎤 ${S.selectedVoice.name}`;
   else if (hasTemp && hasControl) modeText = `${S.recordedBlob ? '🎤 临时录音' : '📁 临时上传'} + 🎭 风格控制`;
   else if (hasTemp) modeText = S.recordedBlob ? '🎤 临时录音' : '📁 临时上传';
-  else modeText = `🎭 ${els.controlInstruction.value.trim()}`;
+  else modeText = `🎭 ${controlInstruction || '自由音色'}`;
+  if (options.usePromptText) modeText = `🎙️ 极致克隆 · ${S.selectedVoice?.name || '临时音频'}`;
   
   toast(`${modeText} · 生成中...`, '');
 
   try {
-    let refBlob = null;
-    
-    if (hasVoice) {
-      refBlob = new Blob([S.selectedVoice.audio], { type: S.selectedVoice.type || 'audio/webm' });
-    } else if (S.recordedBlob) {
-      refBlob = toAudioFile(S.recordedBlob, `recorded_${Date.now()}.wav`);
-    } else if (S.uploadedFile) {
-      refBlob = S.uploadedFile;
-    }
+    if (!S.client && !(await connect())) return;
 
-    log('✅ API 响应接收', 'rs');
-    const { url, blob, audio } = await synthesizeAudio({
+    log('正在请求生成语音', 'nf');
+    const result = await synthesizeAudio({
       text,
-      controlInstruction: hasControl ? els.controlInstruction.value.trim() : '',
-      referenceBlob: refBlob
+      controlInstruction,
+      referenceBlob: refBlob,
+      options
     });
-    S.generatedBlob = blob;
-
-    els.audioPlayer.src = url; els.audioPlayer.load();
-    els.sampleRate.textContent = audio.sample_rate || 44100;
-    els.duration.textContent = (audio.duration || 0).toFixed(1);
-    els.resultArea.classList.add('vis'); els.audioInfo.style.display = 'flex';
+    result.filename = buildWorkbenchFilename(text, new Date(), controlInstruction);
+    const { url, blob } = result;
+    showAudioResult(result);
+    log('✅ 语音生成完成', 'rs');
     
     const createdAt = Date.now();
     S.history.unshift({
@@ -2378,6 +2618,7 @@ async function generate() {
       mode: modeText,
       url: url,
       blob: blob || S.generatedBlob || null,
+      result,
       time: new Date(createdAt).toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'}),
       createdAt,
       checked: false
@@ -2390,23 +2631,27 @@ async function generate() {
   } catch (e) {
     console.error(e); log(`生成失败: ${e.message}`, 'er'); toast(`生成失败: ${e.message}`, 'er');
   } finally {
+    S.generating = false;
     els.generateBtn.classList.remove('ld'); els.generateBtn.disabled = false;
   }
 }
 async function generateBatch({ selectedOnly = false } = {}) {
-  if (S.batchGenerating) return;
+  if (S.batchGenerating || S.generating || S.isRecording) return;
   if (!S.batchItems.length) parseBatchScript();
   const queue = S.batchItems.filter(it => it.valid && it.voice && (!selectedOnly || it.checked) && !it.audioUrl);
   if (!queue.length) {
     updateBatchStatus(selectedOnly ? '没有可生成的已选条目。请先勾选已匹配人物的条目。' : '没有可生成的条目。请先解析脚本，并确认角色名称能匹配到人物库。');
     return;
   }
-  if (!S.client && !(await connect())) return;
+  const options = getGenerationOptions();
 
   S.batchGenerating = true;
+  if (!S.client && !(await connect())) { S.batchGenerating = false; return; }
   els.generateBatchBtn.disabled = true;
   if (els.generateSelectedBatchBtn) els.generateSelectedBatchBtn.disabled = true;
   els.parseBatchBtn.disabled = true;
+  els.refreshBatchBtn.disabled = true;
+  els.batchScript.disabled = true;
   updateBatchStatus(`${selectedOnly ? '开始生成选中条目' : '开始批量生成'}，共 ${queue.length} 条。`);
 
   for (const item of queue) {
@@ -2418,7 +2663,8 @@ async function generateBatch({ selectedOnly = false } = {}) {
       const { url, blob } = await synthesizeAudio({
         text: item.synthText,
         controlInstruction: item.controlInstruction,
-        referenceBlob: refBlob
+        referenceBlob: refBlob,
+        options: { ...options, promptText: item.voice.promptText || '' }
       });
       item.audioUrl = url;
       item.audioBlob = blob;
@@ -2438,6 +2684,9 @@ async function generateBatch({ selectedOnly = false } = {}) {
   els.generateBatchBtn.disabled = false;
   updateBatchDownloadState();
   els.parseBatchBtn.disabled = false;
+  els.refreshBatchBtn.disabled = false;
+  els.batchScript.disabled = false;
+  renderBatchItems();
   const success = S.batchItems.filter(it => it.status === 'done').length;
   const failed = S.batchItems.filter(it => it.status === 'error').length;
   updateBatchStatus(`${selectedOnly ? '生成选中完成' : '批量生成完成'}：成功 ${success} 条，失败 ${failed} 条。勾选条目可继续直接批量下载。`);
@@ -2447,16 +2696,24 @@ els.generateSelectedBatchBtn.addEventListener('click', () => generateBatch({ sel
 
 // 下载/播放
 els.downloadBtn.addEventListener('click', async () => {
-  if (!els.audioPlayer.src) return;
+  const result = S.currentResult;
+  if (!result) return;
   try {
     await triggerNamedDownload({
-      url: els.audioPlayer.src,
-      filename: buildWorkbenchFilename(els.targetText.value, new Date(), els.controlInstruction.value),
-      blob: S.generatedBlob || null
+      url: result.url,
+      filename: result.filename,
+      blob: result.blob
     });
   } catch (err) {
     toast(`下载失败: ${err.message}`, 'er');
   }
+});
+els.downloadOriginalBtn.addEventListener('click', async () => {
+  const result = S.currentResult;
+  if (!result) return;
+  try {
+    await triggerNamedDownload({ url: result.url, filename: result.filename.replace(/\.wav$/i, `.${result.extension}`), blob: result.blob });
+  } catch (error) { toast(`下载失败：${error.message}`, 'er'); }
 });
 
 let playing = false;
